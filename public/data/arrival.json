@@ -1,5 +1,896 @@
 {
-  "updatedAt": null,
+  "updatedAt": "2026-03-06T09:13:51.371Z",
   "airport": "TPE",
-  "flights": []
+  "flights": [
+    {
+      "terminal": "--",
+      "flightNumber": "CI058",
+      "airportCode": "MEL",
+      "airportNameZh": "墨爾本",
+      "airportNameEn": "Melbourne",
+      "scheduledTime": "04:15",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5381",
+      "airportCode": "MIA",
+      "airportNameZh": "邁阿密",
+      "airportNameEn": "Miami",
+      "scheduledTime": "04:20",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5826",
+      "airportCode": "HKG",
+      "airportNameZh": "香港",
+      "airportNameEn": "Hong Kong",
+      "scheduledTime": "04:30",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI052",
+      "airportCode": "SYD",
+      "airportNameZh": "雪梨",
+      "airportNameEn": "Sydney",
+      "scheduledTime": "04:40",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI021",
+      "airportCode": "SEA",
+      "airportNameZh": "西雅圖",
+      "airportNameEn": "Seattle",
+      "scheduledTime": "04:55",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI007",
+      "airportCode": "LAX",
+      "airportNameZh": "洛杉磯",
+      "airportNameEn": "Los Angeles",
+      "scheduledTime": "05:00",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI023",
+      "airportCode": "ONT",
+      "airportNameZh": "ONT",
+      "airportNameEn": "ONT",
+      "scheduledTime": "05:20",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI068",
+      "airportCode": "PRG",
+      "airportNameZh": "PRG",
+      "airportNameEn": "PRG",
+      "scheduledTime": "05:20",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI011",
+      "airportCode": "JFK",
+      "airportNameZh": "紐約",
+      "airportNameEn": "New York JFK",
+      "scheduledTime": "05:30",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI031",
+      "airportCode": "YVR",
+      "airportNameZh": "溫哥華",
+      "airportNameEn": "Vancouver",
+      "scheduledTime": "05:30",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5928",
+      "airportCode": "SZX",
+      "airportNameZh": "深圳",
+      "airportNameEn": "Shenzhen",
+      "scheduledTime": "05:35",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI003",
+      "airportCode": "SFO",
+      "airportNameZh": "舊金山",
+      "airportNameEn": "San Francisco",
+      "scheduledTime": "05:50",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI076",
+      "airportCode": "FCO",
+      "airportNameZh": "羅馬",
+      "airportNameEn": "Rome",
+      "scheduledTime": "05:50",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI074",
+      "airportCode": "AMS",
+      "airportNameZh": "阿姆斯特丹",
+      "airportNameEn": "Amsterdam",
+      "scheduledTime": "06:00",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI062",
+      "airportCode": "FRA",
+      "airportNameZh": "法蘭克福",
+      "airportNameEn": "Frankfurt",
+      "scheduledTime": "06:10",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5894",
+      "airportCode": "CAN",
+      "airportNameZh": "廣州",
+      "airportNameEn": "Guangzhou",
+      "scheduledTime": "06:15",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI756",
+      "airportCode": "SIN",
+      "airportNameZh": "新加坡",
+      "airportNameEn": "Singapore",
+      "scheduledTime": "06:55",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI838",
+      "airportCode": "BKK",
+      "airportNameZh": "曼谷素萬",
+      "airportNameEn": "Bangkok BKK",
+      "scheduledTime": "07:25",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI764",
+      "airportCode": "CGK",
+      "airportNameZh": "雅加達",
+      "airportNameEn": "Jakarta",
+      "scheduledTime": "08:05",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5345",
+      "airportCode": "ATL",
+      "airportNameZh": "亞特蘭大",
+      "airportNameEn": "Atlanta",
+      "scheduledTime": "08:15",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5998",
+      "airportCode": "CKG",
+      "airportNameZh": "重慶",
+      "airportNameEn": "Chongqing",
+      "scheduledTime": "08:20",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI125",
+      "airportCode": "ISG",
+      "airportNameZh": "ISG",
+      "airportNameEn": "ISG",
+      "scheduledTime": "09:30",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI922",
+      "airportCode": "HKG",
+      "airportNameZh": "香港",
+      "airportNameEn": "Hong Kong",
+      "scheduledTime": "10:00",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5872",
+      "airportCode": "SIN",
+      "airportNameZh": "新加坡",
+      "airportNameEn": "Singapore",
+      "scheduledTime": "10:40",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI191",
+      "airportCode": "PUS",
+      "airportNameZh": "釜山",
+      "airportNameEn": "Busan",
+      "scheduledTime": "11:45",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI151",
+      "airportCode": "NGO",
+      "airportNameZh": "名古屋",
+      "airportNameEn": "Nagoya",
+      "scheduledTime": "12:00",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI602",
+      "airportCode": "HKG",
+      "airportNameZh": "香港",
+      "airportNameEn": "Hong Kong",
+      "scheduledTime": "12:05",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI121",
+      "airportCode": "OKA",
+      "airportNameZh": "沖繩",
+      "airportNameEn": "Okinawa",
+      "scheduledTime": "12:25",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI111",
+      "airportCode": "FUK",
+      "airportNameZh": "福岡",
+      "airportNameEn": "Fukuoka",
+      "scheduledTime": "12:30",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI702",
+      "airportCode": "MNL",
+      "airportNameZh": "馬尼拉",
+      "airportNameEn": "Manila",
+      "scheduledTime": "12:50",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI904",
+      "airportCode": "HKG",
+      "airportNameZh": "香港",
+      "airportNameEn": "Hong Kong",
+      "scheduledTime": "12:55",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI113",
+      "airportCode": "HIJ",
+      "airportNameZh": "廣島",
+      "airportNameEn": "Hiroshima",
+      "scheduledTime": "13:10",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI189",
+      "airportCode": "PUS",
+      "airportNameZh": "釜山",
+      "airportNameEn": "Busan",
+      "scheduledTime": "13:25",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5828",
+      "airportCode": "HKG",
+      "airportNameZh": "香港",
+      "airportNameEn": "Hong Kong",
+      "scheduledTime": "13:40",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI788",
+      "airportCode": "DAD",
+      "airportNameZh": "峴港",
+      "airportNameEn": "Da Nang",
+      "scheduledTime": "13:40",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI502",
+      "airportCode": "PVG",
+      "airportNameZh": "上海浦東",
+      "airportNameEn": "Shanghai PVG",
+      "scheduledTime": "14:05",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI161",
+      "airportCode": "ICN",
+      "airportNameZh": "首爾仁川",
+      "airportNameEn": "Seoul Incheon",
+      "scheduledTime": "14:10",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI155",
+      "airportCode": "NGO",
+      "airportNameZh": "名古屋",
+      "airportNameEn": "Nagoya",
+      "scheduledTime": "14:30",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5884",
+      "airportCode": "SIN",
+      "airportNameZh": "新加坡",
+      "airportNameEn": "Singapore",
+      "scheduledTime": "14:40",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI157",
+      "airportCode": "KIX",
+      "airportNameZh": "大阪關西",
+      "airportNameEn": "Osaka Kansai",
+      "scheduledTime": "15:10",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI792",
+      "airportCode": "HAN",
+      "airportNameZh": "河內",
+      "airportNameEn": "Hanoi",
+      "scheduledTime": "15:15",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI782",
+      "airportCode": "SGN",
+      "airportNameZh": "胡志明市",
+      "airportNameEn": "Ho Chi Minh",
+      "scheduledTime": "15:20",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI862",
+      "airportCode": "KTI",
+      "airportNameZh": "KTI",
+      "airportNameEn": "KTI",
+      "scheduledTime": "15:30",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI862",
+      "airportCode": "PNH",
+      "airportNameZh": "PNH",
+      "airportNameEn": "PNH",
+      "scheduledTime": "15:30",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5311",
+      "airportCode": "JFK",
+      "airportNameZh": "紐約",
+      "airportNameEn": "New York JFK",
+      "scheduledTime": "15:35",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5686",
+      "airportCode": "AMS",
+      "airportNameZh": "阿姆斯特丹",
+      "airportNameEn": "Amsterdam",
+      "scheduledTime": "15:40",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI834",
+      "airportCode": "BKK",
+      "airportNameZh": "曼谷素萬",
+      "airportNameEn": "Bangkok BKK",
+      "scheduledTime": "15:40",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI512",
+      "airportCode": "PEK",
+      "airportNameZh": "北京首都",
+      "airportNameEn": "Beijing Cap.",
+      "scheduledTime": "15:45",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI153",
+      "airportCode": "KIX",
+      "airportNameZh": "大阪關西",
+      "airportNameEn": "Osaka Kansai",
+      "scheduledTime": "15:55",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI910",
+      "airportCode": "HKG",
+      "airportNameZh": "香港",
+      "airportNameEn": "Hong Kong",
+      "scheduledTime": "15:55",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI852",
+      "airportCode": "CNX",
+      "airportNameZh": "CNX",
+      "airportNameEn": "CNX",
+      "scheduledTime": "16:00",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI101",
+      "airportCode": "NRT",
+      "airportNameZh": "東京成田",
+      "airportNameEn": "Tokyo Narita",
+      "scheduledTime": "17:20",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI082",
+      "airportCode": "LHR",
+      "airportNameZh": "倫敦",
+      "airportNameEn": "London",
+      "scheduledTime": "17:35",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI832",
+      "airportCode": "BKK",
+      "airportNameZh": "曼谷素萬",
+      "airportNameEn": "Bangkok BKK",
+      "scheduledTime": "18:10",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI131",
+      "airportCode": "CTS",
+      "airportNameZh": "札幌",
+      "airportNameEn": "Sapporo",
+      "scheduledTime": "18:15",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI754",
+      "airportCode": "SIN",
+      "airportNameZh": "新加坡",
+      "airportNameEn": "Singapore",
+      "scheduledTime": "18:35",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI704",
+      "airportCode": "MNL",
+      "airportNameZh": "馬尼拉",
+      "airportNameEn": "Manila",
+      "scheduledTime": "19:05",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5705",
+      "airportCode": "NRT",
+      "airportNameZh": "東京成田",
+      "airportNameEn": "Tokyo Narita",
+      "scheduledTime": "19:20",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI916",
+      "airportCode": "HKG",
+      "airportNameZh": "香港",
+      "airportNameEn": "Hong Kong",
+      "scheduledTime": "19:25",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI722",
+      "airportCode": "KUL",
+      "airportNameZh": "吉隆坡",
+      "airportNameEn": "Kuala Lumpur",
+      "scheduledTime": "19:35",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5265",
+      "airportCode": "DFW",
+      "airportNameZh": "達拉斯",
+      "airportNameEn": "Dallas",
+      "scheduledTime": "19:40",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI6884",
+      "airportCode": "BKK",
+      "airportNameZh": "曼谷素萬",
+      "airportNameEn": "Bangkok BKK",
+      "scheduledTime": "19:45",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI732",
+      "airportCode": "PEN",
+      "airportNameZh": "PEN",
+      "airportNameEn": "PEN",
+      "scheduledTime": "19:55",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI528",
+      "airportCode": "SZX",
+      "airportNameZh": "深圳",
+      "airportNameEn": "Shenzhen",
+      "scheduledTime": "20:00",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI105",
+      "airportCode": "NRT",
+      "airportNameZh": "東京成田",
+      "airportNameEn": "Tokyo Narita",
+      "scheduledTime": "20:35",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5233",
+      "airportCode": "ORD",
+      "airportNameZh": "芝加哥",
+      "airportNameEn": "Chicago",
+      "scheduledTime": "20:40",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI179",
+      "airportCode": "TAK",
+      "airportNameZh": "TAK",
+      "airportNameEn": "TAK",
+      "scheduledTime": "20:55",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI173",
+      "airportCode": "KIX",
+      "airportNameZh": "大阪關西",
+      "airportNameEn": "Osaka Kansai",
+      "scheduledTime": "21:00",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5141",
+      "airportCode": "ORD",
+      "airportNameZh": "芝加哥",
+      "airportNameEn": "Chicago",
+      "scheduledTime": "21:00",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI772",
+      "airportCode": "DPS",
+      "airportNameZh": "峇里島",
+      "airportNameEn": "Bali",
+      "scheduledTime": "21:05",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI762",
+      "airportCode": "CGK",
+      "airportNameZh": "雅加達",
+      "airportNameEn": "Jakarta",
+      "scheduledTime": "21:10",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI027",
+      "airportCode": "ROR",
+      "airportNameZh": "ROR",
+      "airportNameEn": "ROR",
+      "scheduledTime": "21:20",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI187",
+      "airportCode": "PUS",
+      "airportNameZh": "釜山",
+      "airportNameEn": "Busan",
+      "scheduledTime": "21:25",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI005",
+      "airportCode": "LAX",
+      "airportNameZh": "洛杉磯",
+      "airportNameEn": "Los Angeles",
+      "scheduledTime": "21:30",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI123",
+      "airportCode": "OKA",
+      "airportNameZh": "沖繩",
+      "airportNameEn": "Okinawa",
+      "scheduledTime": "21:30",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI794",
+      "airportCode": "HAN",
+      "airportNameZh": "河內",
+      "airportNameEn": "Hanoi",
+      "scheduledTime": "21:40",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI504",
+      "airportCode": "PVG",
+      "airportNameZh": "上海浦東",
+      "airportNameEn": "Shanghai PVG",
+      "scheduledTime": "21:50",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI6886",
+      "airportCode": "HAN",
+      "airportNameZh": "河內",
+      "airportNameEn": "Hanoi",
+      "scheduledTime": "22:00",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI920",
+      "airportCode": "HKG",
+      "airportNameZh": "香港",
+      "airportNameEn": "Hong Kong",
+      "scheduledTime": "22:05",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI784",
+      "airportCode": "SGN",
+      "airportNameZh": "胡志明市",
+      "airportNameEn": "Ho Chi Minh",
+      "scheduledTime": "22:10",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI163",
+      "airportCode": "ICN",
+      "airportNameZh": "首爾仁川",
+      "airportNameEn": "Seoul Incheon",
+      "scheduledTime": "22:20",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5153",
+      "airportCode": "LAX",
+      "airportNameZh": "洛杉磯",
+      "airportNameEn": "Los Angeles",
+      "scheduledTime": "22:20",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI6844",
+      "airportCode": "HKG",
+      "airportNameZh": "香港",
+      "airportNameEn": "Hong Kong",
+      "scheduledTime": "22:20",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI836",
+      "airportCode": "BKK",
+      "airportNameZh": "曼谷素萬",
+      "airportNameEn": "Bangkok BKK",
+      "scheduledTime": "22:20",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI117",
+      "airportCode": "FUK",
+      "airportNameZh": "福岡",
+      "airportNameEn": "Fukuoka",
+      "scheduledTime": "22:25",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5161",
+      "airportCode": "LAX",
+      "airportNameZh": "洛杉磯",
+      "airportNameEn": "Los Angeles",
+      "scheduledTime": "22:40",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI109",
+      "airportCode": "NRT",
+      "airportNameZh": "東京成田",
+      "airportNameEn": "Tokyo Narita",
+      "scheduledTime": "22:45",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI924",
+      "airportCode": "HKG",
+      "airportNameZh": "香港",
+      "airportNameEn": "Hong Kong",
+      "scheduledTime": "23:10",
+      "statusZh": "",
+      "statusEn": ""
+    },
+    {
+      "terminal": "--",
+      "flightNumber": "CI5870",
+      "airportCode": "CGK",
+      "airportNameZh": "雅加達",
+      "airportNameEn": "Jakarta",
+      "scheduledTime": "23:40",
+      "statusZh": "",
+      "statusEn": ""
+    }
+  ]
 }
