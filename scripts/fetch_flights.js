@@ -124,6 +124,19 @@ function formatTime(iso) {
     return m ? m[1] : '--:--';
 }
 
+// TDX 的狀態欄位有時將中英文合併在同一字串（如「已到ARRIVED」「準時ON TIME」）
+// 此函式將其拆開為 { zh, en }
+function parseStatus(raw, rawEn) {
+    const str = raw || '';
+    const strEn = rawEn || '';
+    // 若 strEn 有值，直接使用
+    if (strEn) return { zh: str, en: strEn };
+    // 否則從合併字串中抽取：中文部分 + 英文部分
+    const zh = (str.match(/[\u4e00-\u9fff]+/g) || []).join('');
+    const en = (str.match(/[A-Z][A-Z ]+/g) || []).map(s => s.trim()).join(' ');
+    return { zh: zh || str, en: en || str };
+}
+
 // ================================================================
 // TDX 認證
 // ================================================================
@@ -181,8 +194,13 @@ function normalizeFlights(rawList, type) {
                 gate:          f.Gate          || '',
                 checkCounter:  f.CheckCounter  || '',
                 baggageClaim:  f.BaggageClaim  || '',
-                statusZh:      f.ArrivalRemark    || f.DepartureRemark    || '',
-                statusEn:      f.ArrivalRemarkEn  || f.DepartureRemarkEn  || '',
+                ...(() => {
+                    const s = parseStatus(
+                        f.ArrivalRemark    || f.DepartureRemark    || '',
+                        f.ArrivalRemarkEn  || f.DepartureRemarkEn  || ''
+                    );
+                    return { statusZh: s.zh, statusEn: s.en };
+                })(),
             };
         })
         .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));

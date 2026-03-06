@@ -34,7 +34,7 @@
         /* ── Logo Bar ─────────────────────────────── */
         #logo-bar {
             flex: 0 0 auto;
-            height: 7vh;
+            height: 9vh;
             display: flex;
             align-items: center;
             gap: 1.2vw;
@@ -43,7 +43,7 @@
         }
 
         #cal-logo {
-            height: 5.5vh;
+            height: 7.5vh;
             object-fit: contain;
             filter: drop-shadow(0 0 6px rgba(200,0,0,0.3));
         }
@@ -115,6 +115,13 @@
             color: #ffcc00;
         }
 
+        /* 標題列下半部設為黑色，避免與第一資料列間出現黃色間隙 */
+        .row.header-row .flap .bottom {
+            background-color: #111;
+            color: transparent;
+            border-bottom-color: #111;
+        }
+
         .column {
             display: flex;
             gap: 1.5px;
@@ -142,7 +149,7 @@
             justify-content: center;
             align-items: center;
             color: #e8e8e8;
-            font-size: 1.25vw;
+            font-size: 1.55vw;
             font-weight: bold;
             background-color: #111;
             border: 1px solid #252525;
@@ -323,8 +330,8 @@ const CONFIG = {
     intervalMs:   10000,   // 每頁顯示秒數（毫秒）
     pageSize:     10,      // 每頁顯示航班數
     tdx: {
-        clientId:     '',  // 填入 TDX client_id
-        clientSecret: '',  // 填入 TDX client_secret
+        clientId:     'how.penguin-5fb8d9ff-3878-495e',
+        clientSecret: '0aa7e513-843a-424a-9253-e597fc235e79',
     },
 };
 
@@ -429,7 +436,7 @@ function airportName(code, lang) {
 // COL_LENGTHS: 每欄「字元數」，同時也是 flex 比例
 //   航廈 | 航班     | 目的地/來源地     | 時間   | 狀態
 // ================================================================
-const COL_LENGTHS = [4, 10, 16, 6, 12];
+const COL_LENGTHS = [4, 8, 16, 6, 12];
 
 const PHASES = [
     { type:'arrival',   lang:'zh', label:'入境　中文' },
@@ -486,6 +493,16 @@ function formatTime(iso) {
     return m ? m[1] : '--:--';
 }
 
+// TDX 狀態欄位有時將中英文合併（如「已到ARRIVED」「準時ON TIME」），拆開處理
+function parseStatus(raw, rawEn) {
+    const str = raw || '';
+    const strEn = rawEn || '';
+    if (strEn) return { zh: str, en: strEn };
+    const zh = (str.match(/[\u4e00-\u9fff]+/g) || []).join('');
+    const en = (str.match(/[A-Z][A-Z ]+/g) || []).map(s => s.trim()).join(' ');
+    return { zh: zh || str, en: en || str };
+}
+
 function normalizeFlight(raw, type) {
     const isArr = (type === 'arrival');
     const airportCode = isArr ? raw.DepartureAirportID : raw.ArrivalAirportID;
@@ -498,8 +515,13 @@ function normalizeFlight(raw, type) {
         airportNameZh: airportName(airportCode, 'zh'),
         airportNameEn: airportName(airportCode, 'en'),
         scheduledTime: time,
-        statusZh:      raw.ArrivalRemark    || raw.DepartureRemark    || '',
-        statusEn:      raw.ArrivalRemarkEn  || raw.DepartureRemarkEn  || '',
+        ...(() => {
+            const s = parseStatus(
+                raw.ArrivalRemark   || raw.DepartureRemark   || '',
+                raw.ArrivalRemarkEn || raw.DepartureRemarkEn || ''
+            );
+            return { statusZh: s.zh, statusEn: s.en };
+        })(),
     };
 }
 
