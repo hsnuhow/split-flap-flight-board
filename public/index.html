@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAL Flight Information Board</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: #0a0a0a;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #board-container {
+            width: 90vw;
+            height: 86vh;
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 0.8vw;
+            gap: 0.4vh;
+        }
+
+        /* ── Logo Bar ─────────────────────────────── */
+        #logo-bar {
+            flex: 0 0 auto;
+            height: 7vh;
+            display: flex;
+            align-items: center;
+            gap: 1.2vw;
+            padding: 0 0.4vw 0.5vh;
+            border-bottom: 1px solid #2e2e2e;
+        }
+
+        #cal-logo {
+            height: 5.5vh;
+            object-fit: contain;
+            filter: drop-shadow(0 0 6px rgba(200,0,0,0.3));
+        }
+
+        #board-title-block {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            line-height: 1;
+        }
+
+        #board-title-zh {
+            color: #ffcc00;
+            font-size: 1.1vw;
+            font-weight: bold;
+            letter-spacing: 0.25em;
+        }
+
+        #board-title-en {
+            color: #666;
+            font-size: 0.65vw;
+            letter-spacing: 0.18em;
+        }
+
+        /* Section indicator – top-right of logo bar */
+        #section-indicator {
+            margin-left: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        #section-label {
+            color: #ffcc00;
+            font-size: 1.0vw;
+            font-weight: bold;
+            letter-spacing: 0.15em;
+            transition: opacity 0.25s;
+        }
+
+        #update-label {
+            color: #444;
+            font-size: 0.6vw;
+            letter-spacing: 0.05em;
+        }
+
+        /* ── Flight Board ─────────────────────────── */
+        #flight-board {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-height: 0;
+        }
+
+        .row {
+            flex: 1;
+            display: flex;
+            gap: 0.8vw;
+            min-height: 0;
+        }
+
+        /* Header row */
+        .row.header-row .flap .top,
+        .row.header-row .flap .bottom,
+        .row.header-row .flap .flipper {
+            background-color: #252525;
+            color: #ffcc00;
+        }
+
+        .column {
+            display: flex;
+            gap: 1.5px;
+            min-width: 0;
+        }
+
+        .flap {
+            flex: 1;
+            position: relative;
+            background-color: #000;
+            border-radius: 2px;
+            perspective: 500px;
+            min-width: 0;
+        }
+
+        .flap .top,
+        .flap .bottom,
+        .flap .flipper {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #e8e8e8;
+            font-size: 1.25vw;
+            font-weight: bold;
+            background-color: #111;
+            border: 1px solid #252525;
+            box-sizing: border-box;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .flap .top    { clip-path: inset(0 0 50% 0); }
+        .flap .bottom { clip-path: inset(50% 0 0 0); }
+
+        .flap .flipper {
+            clip-path: inset(0 0 50% 0);
+            transform-origin: center bottom;
+            z-index: 5;
+        }
+
+        /* centre divider line */
+        .flap::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: #000;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .flap.flipping .flipper {
+            animation: flip-down 0.065s cubic-bezier(0.4, 0.0, 1, 1) forwards;
+        }
+
+        @keyframes flip-down {
+            0%   { transform: rotateX(0deg); }
+            100% { transform: rotateX(-90deg); }
+        }
+
+        /* ── Status Bar ───────────────────────────── */
+        #status-bar {
+            flex: 0 0 auto;
+            height: 2.4vh;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 0.4vw;
+            gap: 0.8vw;
+            border-top: 1px solid #222;
+        }
+
+        #no-data-msg {
+            margin-right: auto;
+            color: #444;
+            font-size: 0.65vw;
+            letter-spacing: 0.05em;
+            display: none;
+        }
+
+        #page-indicator {
+            color: #555;
+            font-size: 0.65vw;
+            font-family: 'Courier New', monospace;
+            min-width: 4em;
+            text-align: right;
+        }
+
+        #countdown-bar {
+            width: 60px;
+            height: 2px;
+            background: #222;
+            border-radius: 1px;
+            overflow: hidden;
+        }
+
+        #countdown-fill {
+            height: 100%;
+            background: #ffcc00;
+            width: 100%;
+        }
+
+        /* ── Overlay (for ?refresh info) ─────────── */
+        #overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        #overlay.show { display: flex; }
+        #overlay-box {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 2em 2.5em;
+            max-width: 40vw;
+            color: #ccc;
+            font-size: 0.85vw;
+            line-height: 1.8;
+        }
+        #overlay-box h2 { color: #ffcc00; margin-bottom: 0.8em; font-size: 1vw; }
+        #overlay-box code { background: #111; padding: 0.1em 0.4em; border-radius: 3px; color: #7cf; }
+        #overlay-close {
+            margin-top: 1.2em;
+            display: inline-block;
+            padding: 0.4em 1.2em;
+            background: #333;
+            color: #ffcc00;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.8vw;
+        }
+        #overlay-close:hover { background: #444; }
+    </style>
+</head>
+<body>
+
+<div id="board-container">
+
+    <div id="logo-bar">
+        <img src="CAL_logo.png" id="cal-logo" alt="China Airlines Logo">
+        <div id="board-title-block">
+            <div id="board-title-zh">中華航空　航班資訊看板</div>
+            <div id="board-title-en">CHINA AIRLINES  FLIGHT INFORMATION DISPLAY</div>
+        </div>
+        <div id="section-indicator">
+            <div id="section-label">—</div>
+            <div id="update-label">載入中…</div>
+        </div>
+    </div>
+
+    <div id="flight-board"></div>
+
+    <div id="status-bar">
+        <div id="no-data-msg">尚無資料，請執行 npm run fetch 後部署</div>
+        <div id="page-indicator">— / —</div>
+        <div id="countdown-bar"><div id="countdown-fill"></div></div>
+    </div>
+
+</div>
+
+<!-- Refresh info overlay -->
+<div id="overlay">
+    <div id="overlay-box">
+        <h2>資料更新說明</h2>
+        <p>本看板資料儲存於靜態 JSON 檔案，需透過以下方式更新：</p>
+        <br>
+        <p><strong>方法一：</strong>執行本機抓取腳本後重新部署</p>
+        <p><code>npm run fetch</code> &nbsp;→&nbsp; <code>firebase deploy</code></p>
+        <br>
+        <p><strong>方法二（取得 API 憑證後）：</strong></p>
+        <p>在 <code>scripts/fetch_flights.js</code> 頂部設定</p>
+        <p><code>TDX_CLIENT_ID</code> 與 <code>TDX_CLIENT_SECRET</code></p>
+        <br>
+        <p style="color:#555;font-size:0.75vw;">資料來源：交通部 TDX 平台 &nbsp;|&nbsp; 機場：TPE 桃園</p>
+        <button id="overlay-close" onclick="document.getElementById('overlay').classList.remove('show')">關閉</button>
+    </div>
+</div>
+
+<script>
+// ================================================================
+// ██████╗  ██████╗ ███╗   ██╗███████╗██╗ ██████╗
+// ██╔════╝██╔═══██╗████╗  ██║██╔════╝██║██╔════╝
+// ██║     ██║   ██║██╔██╗ ██║█████╗  ██║██║  ███╗
+// ██║     ██║   ██║██║╚██╗██║██╔══╝  ██║██║   ██║
+// ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝
+//  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝
+// ================================================================
+// 修改 CONFIG 以調整 TDX 憑證（取得後填入）
+// ================================================================
+const CONFIG = {
+    airport:      'TPE',
+    airline:      'CI',
+    intervalMs:   10000,   // 每頁顯示秒數（毫秒）
+    pageSize:     10,      // 每頁顯示航班數
+    tdx: {
+        clientId:     '',  // 填入 TDX client_id
+        clientSecret: '',  // 填入 TDX client_secret
+    },
+};
+
+// ================================================================
+// 機場代碼 → 顯示名稱
+// ================================================================
+const AIRPORT_NAMES = {
+    // 日本
+    NRT:{zh:'東京成田',en:'Tokyo Narita'},
+    HND:{zh:'東京羽田',en:'Tokyo Haneda'},
+    KIX:{zh:'大阪關西',en:'Osaka Kansai'},
+    ITM:{zh:'大阪伊丹',en:'Osaka Itami'},
+    NGO:{zh:'名古屋',  en:'Nagoya'},
+    FUK:{zh:'福岡',    en:'Fukuoka'},
+    OKA:{zh:'沖繩',    en:'Okinawa'},
+    CTS:{zh:'札幌',    en:'Sapporo'},
+    HIJ:{zh:'廣島',    en:'Hiroshima'},
+    KMJ:{zh:'熊本',    en:'Kumamoto'},
+    KOJ:{zh:'鹿兒島',  en:'Kagoshima'},
+    // 韓國
+    ICN:{zh:'首爾仁川',en:'Seoul Incheon'},
+    GMP:{zh:'首爾金浦',en:'Seoul Gimpo'},
+    PUS:{zh:'釜山',    en:'Busan'},
+    // 港澳
+    HKG:{zh:'香港',    en:'Hong Kong'},
+    MFM:{zh:'澳門',    en:'Macau'},
+    // 中國大陸
+    PEK:{zh:'北京首都',en:'Beijing Cap.'},
+    PKX:{zh:'北京大興',en:'Beijing Dax.'},
+    PVG:{zh:'上海浦東',en:'Shanghai PVG'},
+    SHA:{zh:'上海虹橋',en:'Shanghai SHA'},
+    CAN:{zh:'廣州',    en:'Guangzhou'},
+    SZX:{zh:'深圳',    en:'Shenzhen'},
+    XMN:{zh:'廈門',    en:'Xiamen'},
+    FOC:{zh:'福州',    en:'Fuzhou'},
+    CTU:{zh:'成都',    en:'Chengdu'},
+    CKG:{zh:'重慶',    en:'Chongqing'},
+    WUH:{zh:'武漢',    en:'Wuhan'},
+    CSX:{zh:'長沙',    en:'Changsha'},
+    KMG:{zh:'昆明',    en:'Kunming'},
+    XIY:{zh:'西安',    en:"Xi'an"},
+    HRB:{zh:'哈爾濱',  en:'Harbin'},
+    SYX:{zh:'三亞',    en:'Sanya'},
+    HAK:{zh:'海口',    en:'Haikou'},
+    NKG:{zh:'南京',    en:'Nanjing'},
+    TAO:{zh:'青島',    en:'Qingdao'},
+    DLC:{zh:'大連',    en:'Dalian'},
+    HGH:{zh:'杭州',    en:'Hangzhou'},
+    // 東南亞
+    MNL:{zh:'馬尼拉',  en:'Manila'},
+    CEB:{zh:'宿霧',    en:'Cebu'},
+    SIN:{zh:'新加坡',  en:'Singapore'},
+    KUL:{zh:'吉隆坡',  en:'Kuala Lumpur'},
+    BKK:{zh:'曼谷素萬',en:'Bangkok BKK'},
+    DMK:{zh:'曼谷廊曼',en:'Bangkok DMK'},
+    HAN:{zh:'河內',    en:'Hanoi'},
+    SGN:{zh:'胡志明市',en:'Ho Chi Minh'},
+    DAD:{zh:'峴港',    en:'Da Nang'},
+    RGN:{zh:'仰光',    en:'Yangon'},
+    DPS:{zh:'峇里島',  en:'Bali'},
+    CGK:{zh:'雅加達',  en:'Jakarta'},
+    // 南亞 / 中東
+    DEL:{zh:'新德里',  en:'New Delhi'},
+    DXB:{zh:'杜拜',    en:'Dubai'},
+    // 大洋洲
+    SYD:{zh:'雪梨',    en:'Sydney'},
+    MEL:{zh:'墨爾本',  en:'Melbourne'},
+    BNE:{zh:'布里斯本',en:'Brisbane'},
+    // 北美
+    LAX:{zh:'洛杉磯',  en:'Los Angeles'},
+    SFO:{zh:'舊金山',  en:'San Francisco'},
+    JFK:{zh:'紐約',    en:'New York JFK'},
+    ORD:{zh:'芝加哥',  en:'Chicago'},
+    SEA:{zh:'西雅圖',  en:'Seattle'},
+    YVR:{zh:'溫哥華',  en:'Vancouver'},
+    // 歐洲
+    AMS:{zh:'阿姆斯特丹',en:'Amsterdam'},
+    LHR:{zh:'倫敦',    en:'London'},
+    CDG:{zh:'巴黎',    en:'Paris'},
+    FRA:{zh:'法蘭克福',en:'Frankfurt'},
+    VIE:{zh:'維也納',  en:'Vienna'},
+    ZRH:{zh:'蘇黎世',  en:'Zurich'},
+    FCO:{zh:'羅馬',    en:'Rome'},
+    // 太平洋
+    GUM:{zh:'關島',    en:'Guam'},
+    // 台灣本島
+    TPE:{zh:'桃園',    en:'Taoyuan'},
+    TSA:{zh:'台北松山',en:'Taipei Songshan'},
+    KHH:{zh:'高雄',    en:'Kaohsiung'},
+    RMQ:{zh:'台中',    en:'Taichung'},
+};
+
+function airportName(code, lang) {
+    if (!code) return '---';
+    const entry = AIRPORT_NAMES[code];
+    if (!entry) return code;
+    return lang === 'zh' ? entry.zh : entry.en;
+}
+
+// ================================================================
+// 版面配置
+// COL_LENGTHS: 每欄「字元數」，同時也是 flex 比例
+//   航廈 | 航班     | 目的地/來源地     | 時間   | 狀態
+// ================================================================
+const COL_LENGTHS = [4, 10, 16, 6, 12];
+
+const PHASES = [
+    { type:'arrival',   lang:'zh', label:'入境　中文' },
+    { type:'arrival',   lang:'en', label:'ARRIVALS  ENG' },
+    { type:'departure', lang:'zh', label:'出境　中文' },
+    { type:'departure', lang:'en', label:'DEPARTURES  ENG' },
+];
+
+const HEADERS = {
+    'arrival-zh':   ['航廈','航班','來源地','時間','狀態'],
+    'arrival-en':   ['TERM','FLIGHT','FROM','TIME','STATUS'],
+    'departure-zh': ['航廈','航班','目的地','時間','狀態'],
+    'departure-en': ['TERM','FLIGHT','DESTINATION','TIME','STATUS'],
+};
+
+const RANDOM_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
+
+// ================================================================
+// 狀態
+// ================================================================
+let flightData  = { arrival: [], departure: [] };
+let flapElements = [];   // [rowIdx][colIdx][charIdx] = {container, top, bottom, flipper, current}
+let phaseIdx    = 0;
+let pageIdx     = 0;
+let rotationTimer   = null;
+let countdownTimer  = null;
+let updatedAt   = null;
+
+// ================================================================
+// 資料載入
+// ================================================================
+async function getTDXToken() {
+    const { clientId, clientSecret } = CONFIG.tdx;
+    if (!clientId || !clientSecret) return null;
+
+    const body = new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: clientId,
+        client_secret: clientSecret,
+    });
+
+    const res = await fetch(
+        'https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token',
+        { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body }
+    );
+    if (!res.ok) throw new Error(`TDX auth failed: ${res.status}`);
+    return (await res.json()).access_token;
+}
+
+function formatTime(iso) {
+    if (!iso) return '--:--';
+    // "2024-01-01T23:55:00+08:00" → "23:55"
+    const m = iso.match(/T(\d{2}:\d{2})/);
+    return m ? m[1] : '--:--';
+}
+
+function normalizeFlight(raw, type) {
+    const isArr = (type === 'arrival');
+    const airportCode = isArr ? raw.DepartureAirportID : raw.ArrivalAirportID;
+    const time = isArr ? formatTime(raw.ScheduleArrivalTime) : formatTime(raw.ScheduleDepartureTime);
+
+    return {
+        terminal:      raw.Terminal || '--',
+        flightNumber:  `${raw.AirlineID}${raw.FlightNumber}`,
+        airportCode:   airportCode,
+        airportNameZh: airportName(airportCode, 'zh'),
+        airportNameEn: airportName(airportCode, 'en'),
+        scheduledTime: time,
+        statusZh:      raw.ArrivalRemark    || raw.DepartureRemark    || '',
+        statusEn:      raw.ArrivalRemarkEn  || raw.DepartureRemarkEn  || '',
+    };
+}
+
+async function fetchFromTDX() {
+    const token = await getTDXToken();
+    const headers = { Accept: 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const base = 'https://tdx.transportdata.tw/api/basic/v2/Air/FIDS/Airport';
+    const filter = `AirlineID eq '${CONFIG.airline}'`;
+
+    const [arrRes, depRes] = await Promise.all([
+        fetch(`${base}/Arrival/${CONFIG.airport}?$filter=${encodeURIComponent(filter)}&$format=JSON`, { headers }),
+        fetch(`${base}/Departure/${CONFIG.airport}?$filter=${encodeURIComponent(filter)}&$format=JSON`, { headers }),
+    ]);
+
+    if (!arrRes.ok) throw new Error(`TDX arrival ${arrRes.status}`);
+    if (!depRes.ok) throw new Error(`TDX departure ${depRes.status}`);
+
+    const arrRaw = await arrRes.json();
+    const depRaw = await depRes.json();
+
+    const now = new Date().toISOString();
+    const arrFlights = (Array.isArray(arrRaw) ? arrRaw : arrRaw.data || [])
+        .filter(f => !f.IsCargo)
+        .map(f => normalizeFlight(f, 'arrival'))
+        .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+
+    const depFlights = (Array.isArray(depRaw) ? depRaw : depRaw.data || [])
+        .filter(f => !f.IsCargo)
+        .map(f => normalizeFlight(f, 'departure'))
+        .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+
+    const cache = { updatedAt: now, arrival: arrFlights, departure: depFlights };
+    localStorage.setItem('cal_board_cache', JSON.stringify(cache));
+
+    flightData.arrival   = arrFlights;
+    flightData.departure = depFlights;
+    updatedAt = now;
+}
+
+async function loadFromStaticFiles() {
+    const [arrRes, depRes] = await Promise.all([
+        fetch('data/arrival.json'),
+        fetch('data/departure.json'),
+    ]);
+
+    if (arrRes.ok) {
+        const d = await arrRes.json();
+        flightData.arrival = d.flights || [];
+        updatedAt = d.updatedAt || updatedAt;
+    }
+    if (depRes.ok) {
+        const d = await depRes.json();
+        flightData.departure = d.flights || [];
+        if (!updatedAt) updatedAt = d.updatedAt;
+    }
+}
+
+function loadFromLocalStorage() {
+    try {
+        const raw = localStorage.getItem('cal_board_cache');
+        if (!raw) return false;
+        const cache = JSON.parse(raw);
+        if (!cache.updatedAt) return false;
+        const age = Date.now() - new Date(cache.updatedAt).getTime();
+        if (age > 24 * 60 * 60 * 1000) return false; // expired after 24h
+        flightData.arrival   = cache.arrival   || [];
+        flightData.departure = cache.departure  || [];
+        updatedAt = cache.updatedAt;
+        return true;
+    } catch { return false; }
+}
+
+async function loadData() {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.has('refresh')) {
+        // Show info overlay, then try live API
+        document.getElementById('overlay').classList.add('show');
+        try {
+            await fetchFromTDX();
+            document.getElementById('update-label').textContent = '已即時更新';
+        } catch (e) {
+            console.warn('Live TDX fetch failed:', e.message);
+        }
+        return;
+    }
+
+    // 1. Try localStorage cache (< 24h)
+    if (loadFromLocalStorage()) return;
+
+    // 2. Fall back to static pre-fetched files
+    await loadFromStaticFiles();
+}
+
+function updateTimeLabel() {
+    const el = document.getElementById('update-label');
+    if (!updatedAt) { el.textContent = '無資料'; return; }
+    const d = new Date(updatedAt);
+    const str = d.toLocaleString('zh-TW', {
+        month: 'numeric', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+    el.textContent = `更新：${str}`;
+}
+
+// ================================================================
+// 看板初始化
+// ================================================================
+function initBoard() {
+    const board = document.getElementById('flight-board');
+    board.innerHTML = '';
+    flapElements = [];
+
+    const totalRows = CONFIG.pageSize + 1; // 1 header + pageSize data rows
+
+    for (let rowIdx = 0; rowIdx < totalRows; rowIdx++) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'row' + (rowIdx === 0 ? ' header-row' : '');
+
+        const flapRow = [];
+
+        COL_LENGTHS.forEach(colLen => {
+            const colDiv = document.createElement('div');
+            colDiv.className = 'column';
+            colDiv.style.flex = colLen;
+
+            const flapsInCol = [];
+            for (let i = 0; i < colLen; i++) {
+                const flap    = document.createElement('div'); flap.className = 'flap';
+                const top     = document.createElement('div'); top.className = 'top';     top.textContent = ' ';
+                const bottom  = document.createElement('div'); bottom.className = 'bottom'; bottom.textContent = ' ';
+                const flipper = document.createElement('div'); flipper.className = 'flipper'; flipper.textContent = ' ';
+                flap.append(top, bottom, flipper);
+                colDiv.appendChild(flap);
+                flapsInCol.push({ container: flap, top, bottom, flipper, current: ' ' });
+            }
+
+            rowDiv.appendChild(colDiv);
+            flapRow.push(flapsInCol);
+        });
+
+        board.appendChild(rowDiv);
+        flapElements.push(flapRow);
+    }
+}
+
+// ================================================================
+// 顯示邏輯
+// ================================================================
+function getRowData(flight, type, lang) {
+    return [
+        flight.terminal,
+        flight.flightNumber,
+        lang === 'zh' ? flight.airportNameZh : flight.airportNameEn,
+        flight.scheduledTime,
+        lang === 'zh' ? (flight.statusZh || '') : (flight.statusEn || ''),
+    ];
+}
+
+function updateRow(rowIdx, colData) {
+    COL_LENGTHS.forEach((colLen, colIdx) => {
+        const str    = String(colData[colIdx] ?? '').padEnd(colLen, ' ').slice(0, colLen);
+        const flaps  = flapElements[rowIdx][colIdx];
+
+        for (let i = 0; i < flaps.length; i++) {
+            const targetChar = str[i] ?? ' ';
+            const flapObj    = flaps[i];
+            if (flapObj.current === targetChar) continue;
+
+            const delay = Math.random() * 380;
+            setTimeout(() => triggerFlip(flapObj, targetChar), delay);
+        }
+    });
+}
+
+function triggerFlip(flapObj, targetChar) {
+    let flipCount  = 0;
+    const maxFlips = Math.floor(Math.random() * 5) + 3;
+
+    const tick = setInterval(() => {
+        flipCount++;
+        const nextChar = flipCount >= maxFlips
+            ? targetChar
+            : RANDOM_CHARS[Math.floor(Math.random() * RANDOM_CHARS.length)];
+
+        if (flipCount >= maxFlips) {
+            clearInterval(tick);
+            flapObj.current = targetChar;
+        }
+
+        flapObj.flipper.textContent = flapObj.top.textContent;
+        flapObj.top.textContent     = nextChar;
+        flapObj.bottom.textContent  = nextChar;
+
+        flapObj.container.classList.remove('flipping');
+        void flapObj.container.offsetWidth; // force reflow
+        flapObj.container.classList.add('flipping');
+    }, 70);
+}
+
+function displayCurrentPage() {
+    const phase    = PHASES[phaseIdx];
+    const flights  = flightData[phase.type];
+    const totalPages = Math.max(1, Math.ceil(flights.length / CONFIG.pageSize));
+    const phaseKey = `${phase.type}-${phase.lang}`;
+
+    // Section label (fade)
+    const labelEl = document.getElementById('section-label');
+    labelEl.style.opacity = '0';
+    setTimeout(() => { labelEl.textContent = phase.label; labelEl.style.opacity = '1'; }, 200);
+
+    // Page indicator
+    document.getElementById('page-indicator').textContent =
+        `${pageIdx + 1} / ${totalPages}`;
+
+    // No-data warning
+    const noData = flightData.arrival.length === 0 && flightData.departure.length === 0;
+    document.getElementById('no-data-msg').style.display = noData ? 'block' : 'none';
+
+    // Header row (row 0)
+    updateRow(0, HEADERS[phaseKey]);
+
+    // Data rows
+    const pageFlights = flights.slice(pageIdx * CONFIG.pageSize, (pageIdx + 1) * CONFIG.pageSize);
+    for (let i = 0; i < CONFIG.pageSize; i++) {
+        if (i < pageFlights.length) {
+            updateRow(i + 1, getRowData(pageFlights[i], phase.type, phase.lang));
+        } else {
+            updateRow(i + 1, ['', '', '', '', '']);
+        }
+    }
+}
+
+// ================================================================
+// 輪播控制
+// ================================================================
+function advance() {
+    const phase = PHASES[phaseIdx];
+    const totalPages = Math.max(1, Math.ceil(flightData[phase.type].length / CONFIG.pageSize));
+
+    pageIdx++;
+    if (pageIdx >= totalPages) {
+        pageIdx   = 0;
+        phaseIdx  = (phaseIdx + 1) % PHASES.length;
+    }
+
+    displayCurrentPage();
+    startCountdown();
+}
+
+function startCountdown() {
+    const fill = document.getElementById('countdown-fill');
+    // Reset
+    fill.style.transition = 'none';
+    fill.style.width      = '100%';
+    void fill.offsetWidth;
+    // Animate
+    fill.style.transition = `width ${CONFIG.intervalMs}ms linear`;
+    fill.style.width      = '0%';
+}
+
+function startRotation() {
+    if (rotationTimer) clearInterval(rotationTimer);
+    displayCurrentPage();
+    startCountdown();
+    rotationTimer = setInterval(advance, CONFIG.intervalMs);
+}
+
+// ================================================================
+// 啟動
+// ================================================================
+window.addEventListener('load', async () => {
+    initBoard();
+    await loadData();
+    updateTimeLabel();
+    startRotation();
+});
+</script>
+</body>
+</html>

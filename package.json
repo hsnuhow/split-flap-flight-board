@@ -1,0 +1,16 @@
+{
+  "name": "cal-flight-board",
+  "version": "1.0.0",
+  "description": "China Airlines Flight Information Display Board – COMPUTEX",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "fetch": "node scripts/fetch_flights.js",
+    "deploy": "npm run fetch && firebase deploy --only hosting",
+    "deploy:only": "firebase deploy --only hosting"
+  },
+  "devDependencies": {
+    "firebase-tools": "^13.0.0"
+  }
+}
