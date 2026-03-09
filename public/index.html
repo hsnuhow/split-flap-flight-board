@@ -34,7 +34,7 @@
         /* ── Logo Bar ─────────────────────────────── */
         #logo-bar {
             flex: 0 0 auto;
-            height: 9vh;
+            height: 12vh;
             display: flex;
             align-items: center;
             gap: 1.2vw;
@@ -43,7 +43,7 @@
         }
 
         #cal-logo {
-            height: 7.5vh;
+            height: 10vh;
             object-fit: contain;
             filter: drop-shadow(0 0 6px rgba(200,0,0,0.3));
         }
@@ -75,6 +75,14 @@
             flex-direction: column;
             align-items: flex-end;
             gap: 4px;
+        }
+
+        #datetime-display {
+            color: #ffcc00;
+            font-size: 1.05vw;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.08em;
+            font-weight: bold;
         }
 
         #section-label {
@@ -119,7 +127,7 @@
         .row.header-row .flap .bottom {
             background-color: #111;
             color: transparent;
-            border-bottom-color: #111;
+            border-color: #111;
         }
 
         .column {
@@ -149,13 +157,15 @@
             justify-content: center;
             align-items: center;
             color: #e8e8e8;
-            font-size: 1.55vw;
+            font-size: 1.9vw;
             font-weight: bold;
             background-color: #111;
             border: 1px solid #252525;
             box-sizing: border-box;
             overflow: hidden;
             white-space: nowrap;
+            transform: scaleX(0.9);
+            transform-origin: center center;
         }
 
         .flap .top    { clip-path: inset(0 0 50% 0); }
@@ -181,12 +191,12 @@
         }
 
         .flap.flipping .flipper {
-            animation: flip-down 0.065s cubic-bezier(0.4, 0.0, 1, 1) forwards;
+            animation: flip-down 0.13s cubic-bezier(0.4, 0.0, 1, 1) forwards;
         }
 
         @keyframes flip-down {
-            0%   { transform: rotateX(0deg); }
-            100% { transform: rotateX(-90deg); }
+            0%   { transform: scaleX(0.9) rotateX(0deg); }
+            100% { transform: scaleX(0.9) rotateX(-90deg); }
         }
 
         /* ── Status Bar ───────────────────────────── */
@@ -280,6 +290,7 @@
             <div id="board-title-en">CHINA AIRLINES  FLIGHT INFORMATION DISPLAY</div>
         </div>
         <div id="section-indicator">
+            <div id="datetime-display">—</div>
             <div id="section-label">—</div>
             <div id="update-label">載入中…</div>
         </div>
@@ -299,14 +310,13 @@
 <div id="overlay">
     <div id="overlay-box">
         <h2>資料更新說明</h2>
-        <p>本看板資料儲存於靜態 JSON 檔案，需透過以下方式更新：</p>
+        <p>本看板每 30 分鐘自動從 API 取得最新航班資料。</p>
         <br>
-        <p><strong>方法一：</strong>執行本機抓取腳本後重新部署</p>
+        <p><strong>手動立即更新：</strong>在網址列加上 <code>?refresh</code></p>
+        <p>例如：<code>https://your-domain.web.app/?refresh</code></p>
+        <br>
+        <p><strong>部署靜態資料：</strong></p>
         <p><code>npm run fetch</code> &nbsp;→&nbsp; <code>firebase deploy</code></p>
-        <br>
-        <p><strong>方法二（取得 API 憑證後）：</strong></p>
-        <p>在 <code>scripts/fetch_flights.js</code> 頂部設定</p>
-        <p><code>TDX_CLIENT_ID</code> 與 <code>TDX_CLIENT_SECRET</code></p>
         <br>
         <p style="color:#555;font-size:0.75vw;">資料來源：交通部 TDX 平台 &nbsp;|&nbsp; 機場：TPE 桃園</p>
         <button id="overlay-close" onclick="document.getElementById('overlay').classList.remove('show')">關閉</button>
@@ -322,107 +332,29 @@
 // ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝
 //  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝
 // ================================================================
-// 修改 CONFIG 以調整 TDX 憑證（取得後填入）
+// 設定（TDX 憑證已移至 Firebase Cloud Function，前端不再存放）
 // ================================================================
 const CONFIG = {
-    airport:      'TPE',
-    airline:      'CI',
-    intervalMs:   10000,   // 每頁顯示秒數（毫秒）
-    pageSize:     10,      // 每頁顯示航班數
-    tdx: {
-        clientId:     'how.penguin-5fb8d9ff-3878-495e',
-        clientSecret: '0aa7e513-843a-424a-9253-e597fc235e79',
-    },
+    airport:       'TPE',
+    airline:       'CI',
+    intervalMs:    10000,   // 每頁顯示秒數（毫秒）
+    pageSize:      10,      // 每頁顯示航班數
+    refreshMs:     30 * 60 * 1000,  // 資料自動更新間隔（30 分鐘）
 };
 
 // ================================================================
-// 機場代碼 → 顯示名稱
+// 機場代碼 → 顯示名稱（從 data/airports.json 載入）
 // ================================================================
-const AIRPORT_NAMES = {
-    // 日本
-    NRT:{zh:'東京成田',en:'Tokyo Narita'},
-    HND:{zh:'東京羽田',en:'Tokyo Haneda'},
-    KIX:{zh:'大阪關西',en:'Osaka Kansai'},
-    ITM:{zh:'大阪伊丹',en:'Osaka Itami'},
-    NGO:{zh:'名古屋',  en:'Nagoya'},
-    FUK:{zh:'福岡',    en:'Fukuoka'},
-    OKA:{zh:'沖繩',    en:'Okinawa'},
-    CTS:{zh:'札幌',    en:'Sapporo'},
-    HIJ:{zh:'廣島',    en:'Hiroshima'},
-    KMJ:{zh:'熊本',    en:'Kumamoto'},
-    KOJ:{zh:'鹿兒島',  en:'Kagoshima'},
-    // 韓國
-    ICN:{zh:'首爾仁川',en:'Seoul Incheon'},
-    GMP:{zh:'首爾金浦',en:'Seoul Gimpo'},
-    PUS:{zh:'釜山',    en:'Busan'},
-    // 港澳
-    HKG:{zh:'香港',    en:'Hong Kong'},
-    MFM:{zh:'澳門',    en:'Macau'},
-    // 中國大陸
-    PEK:{zh:'北京首都',en:'Beijing Cap.'},
-    PKX:{zh:'北京大興',en:'Beijing Dax.'},
-    PVG:{zh:'上海浦東',en:'Shanghai PVG'},
-    SHA:{zh:'上海虹橋',en:'Shanghai SHA'},
-    CAN:{zh:'廣州',    en:'Guangzhou'},
-    SZX:{zh:'深圳',    en:'Shenzhen'},
-    XMN:{zh:'廈門',    en:'Xiamen'},
-    FOC:{zh:'福州',    en:'Fuzhou'},
-    CTU:{zh:'成都',    en:'Chengdu'},
-    CKG:{zh:'重慶',    en:'Chongqing'},
-    WUH:{zh:'武漢',    en:'Wuhan'},
-    CSX:{zh:'長沙',    en:'Changsha'},
-    KMG:{zh:'昆明',    en:'Kunming'},
-    XIY:{zh:'西安',    en:"Xi'an"},
-    HRB:{zh:'哈爾濱',  en:'Harbin'},
-    SYX:{zh:'三亞',    en:'Sanya'},
-    HAK:{zh:'海口',    en:'Haikou'},
-    NKG:{zh:'南京',    en:'Nanjing'},
-    TAO:{zh:'青島',    en:'Qingdao'},
-    DLC:{zh:'大連',    en:'Dalian'},
-    HGH:{zh:'杭州',    en:'Hangzhou'},
-    // 東南亞
-    MNL:{zh:'馬尼拉',  en:'Manila'},
-    CEB:{zh:'宿霧',    en:'Cebu'},
-    SIN:{zh:'新加坡',  en:'Singapore'},
-    KUL:{zh:'吉隆坡',  en:'Kuala Lumpur'},
-    BKK:{zh:'曼谷素萬',en:'Bangkok BKK'},
-    DMK:{zh:'曼谷廊曼',en:'Bangkok DMK'},
-    HAN:{zh:'河內',    en:'Hanoi'},
-    SGN:{zh:'胡志明市',en:'Ho Chi Minh'},
-    DAD:{zh:'峴港',    en:'Da Nang'},
-    RGN:{zh:'仰光',    en:'Yangon'},
-    DPS:{zh:'峇里島',  en:'Bali'},
-    CGK:{zh:'雅加達',  en:'Jakarta'},
-    // 南亞 / 中東
-    DEL:{zh:'新德里',  en:'New Delhi'},
-    DXB:{zh:'杜拜',    en:'Dubai'},
-    // 大洋洲
-    SYD:{zh:'雪梨',    en:'Sydney'},
-    MEL:{zh:'墨爾本',  en:'Melbourne'},
-    BNE:{zh:'布里斯本',en:'Brisbane'},
-    // 北美
-    LAX:{zh:'洛杉磯',  en:'Los Angeles'},
-    SFO:{zh:'舊金山',  en:'San Francisco'},
-    JFK:{zh:'紐約',    en:'New York JFK'},
-    ORD:{zh:'芝加哥',  en:'Chicago'},
-    SEA:{zh:'西雅圖',  en:'Seattle'},
-    YVR:{zh:'溫哥華',  en:'Vancouver'},
-    // 歐洲
-    AMS:{zh:'阿姆斯特丹',en:'Amsterdam'},
-    LHR:{zh:'倫敦',    en:'London'},
-    CDG:{zh:'巴黎',    en:'Paris'},
-    FRA:{zh:'法蘭克福',en:'Frankfurt'},
-    VIE:{zh:'維也納',  en:'Vienna'},
-    ZRH:{zh:'蘇黎世',  en:'Zurich'},
-    FCO:{zh:'羅馬',    en:'Rome'},
-    // 太平洋
-    GUM:{zh:'關島',    en:'Guam'},
-    // 台灣本島
-    TPE:{zh:'桃園',    en:'Taoyuan'},
-    TSA:{zh:'台北松山',en:'Taipei Songshan'},
-    KHH:{zh:'高雄',    en:'Kaohsiung'},
-    RMQ:{zh:'台中',    en:'Taichung'},
-};
+let AIRPORT_NAMES = {};
+
+async function loadAirports() {
+    try {
+        const res = await fetch('data/airports.json');
+        if (res.ok) AIRPORT_NAMES = await res.json();
+    } catch(e) {
+        console.warn('Failed to load airports.json:', e);
+    }
+}
 
 function airportName(code, lang) {
     if (!code) return '---';
@@ -468,23 +400,7 @@ let updatedAt   = null;
 // ================================================================
 // 資料載入
 // ================================================================
-async function getTDXToken() {
-    const { clientId, clientSecret } = CONFIG.tdx;
-    if (!clientId || !clientSecret) return null;
-
-    const body = new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: clientId,
-        client_secret: clientSecret,
-    });
-
-    const res = await fetch(
-        'https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token',
-        { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body }
-    );
-    if (!res.ok) throw new Error(`TDX auth failed: ${res.status}`);
-    return (await res.json()).access_token;
-}
+// getTDXToken 已移除；憑證改存於 Firebase Cloud Function（/api/flights）
 
 function formatTime(iso) {
     if (!iso) return '--:--';
@@ -525,42 +441,29 @@ function normalizeFlight(raw, type) {
     };
 }
 
-async function fetchFromTDX() {
-    const token = await getTDXToken();
-    const headers = { Accept: 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const base = 'https://tdx.transportdata.tw/api/basic/v2/Air/FIDS/Airport';
-    const filter = `AirlineID eq '${CONFIG.airline}'`;
-
+// 呼叫 Firebase Cloud Function（憑證安全存於後端）
+async function fetchFromAPI() {
     const [arrRes, depRes] = await Promise.all([
-        fetch(`${base}/Arrival/${CONFIG.airport}?$filter=${encodeURIComponent(filter)}&$format=JSON`, { headers }),
-        fetch(`${base}/Departure/${CONFIG.airport}?$filter=${encodeURIComponent(filter)}&$format=JSON`, { headers }),
+        fetch('/api/flights?type=arrival'),
+        fetch('/api/flights?type=departure'),
     ]);
 
-    if (!arrRes.ok) throw new Error(`TDX arrival ${arrRes.status}`);
-    if (!depRes.ok) throw new Error(`TDX departure ${depRes.status}`);
+    if (!arrRes.ok) throw new Error(`API arrival ${arrRes.status}`);
+    if (!depRes.ok) throw new Error(`API departure ${depRes.status}`);
 
-    const arrRaw = await arrRes.json();
-    const depRaw = await depRes.json();
+    const arrData = await arrRes.json();
+    const depData = await depRes.json();
 
-    const now = new Date().toISOString();
-    const arrFlights = (Array.isArray(arrRaw) ? arrRaw : arrRaw.data || [])
-        .filter(f => !f.IsCargo)
-        .map(f => normalizeFlight(f, 'arrival'))
-        .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+    flightData.arrival   = arrData.flights || [];
+    flightData.departure = depData.flights || [];
+    updatedAt = arrData.updatedAt || new Date().toISOString();
 
-    const depFlights = (Array.isArray(depRaw) ? depRaw : depRaw.data || [])
-        .filter(f => !f.IsCargo)
-        .map(f => normalizeFlight(f, 'departure'))
-        .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
-
-    const cache = { updatedAt: now, arrival: arrFlights, departure: depFlights };
-    localStorage.setItem('cal_board_cache', JSON.stringify(cache));
-
-    flightData.arrival   = arrFlights;
-    flightData.departure = depFlights;
-    updatedAt = now;
+    // 更新 localStorage cache
+    localStorage.setItem('cal_board_cache', JSON.stringify({
+        updatedAt,
+        arrival:   flightData.arrival,
+        departure: flightData.departure,
+    }));
 }
 
 async function loadFromStaticFiles() {
@@ -603,10 +506,10 @@ async function loadData() {
         // Show info overlay, then try live API
         document.getElementById('overlay').classList.add('show');
         try {
-            await fetchFromTDX();
+            await fetchFromAPI();
             document.getElementById('update-label').textContent = '已即時更新';
         } catch (e) {
-            console.warn('Live TDX fetch failed:', e.message);
+            console.warn('Live API fetch failed:', e.message);
         }
         return;
     }
@@ -616,6 +519,17 @@ async function loadData() {
 
     // 2. Fall back to static pre-fetched files
     await loadFromStaticFiles();
+}
+
+// ================================================================
+// 即時時鐘
+// ================================================================
+function updateClock() {
+    const now  = new Date();
+    const DAYS = ['日','一','二','三','四','五','六'];
+    const pad  = n => String(n).padStart(2, '0');
+    const str  = `${now.getFullYear()} · ${pad(now.getMonth()+1)} · ${pad(now.getDate())}  星期${DAYS[now.getDay()]}  ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    document.getElementById('datetime-display').textContent = str;
 }
 
 function updateTimeLabel() {
@@ -685,16 +599,24 @@ function getRowData(flight, type, lang) {
 
 function updateRow(rowIdx, colData) {
     COL_LENGTHS.forEach((colLen, colIdx) => {
-        const str    = String(colData[colIdx] ?? '').padEnd(colLen, ' ').slice(0, colLen);
-        const flaps  = flapElements[rowIdx][colIdx];
+        const str   = String(colData[colIdx] ?? '').padEnd(colLen, ' ').slice(0, colLen);
+        const flaps = flapElements[rowIdx][colIdx];
 
         for (let i = 0; i < flaps.length; i++) {
             const targetChar = str[i] ?? ' ';
             const flapObj    = flaps[i];
             if (flapObj.current === targetChar) continue;
 
-            const delay = Math.random() * 380;
-            setTimeout(() => triggerFlip(flapObj, targetChar), delay);
+            if (rowIdx === 0) {
+                // 標題列直接寫死，不翻牌
+                flapObj.top.textContent     = targetChar;
+                flapObj.bottom.textContent  = targetChar;
+                flapObj.flipper.textContent = targetChar;
+                flapObj.current             = targetChar;
+            } else {
+                const delay = Math.random() * 760;
+                setTimeout(() => triggerFlip(flapObj, targetChar), delay);
+            }
         }
     });
 }
@@ -721,7 +643,7 @@ function triggerFlip(flapObj, targetChar) {
         flapObj.container.classList.remove('flipping');
         void flapObj.container.offsetWidth; // force reflow
         flapObj.container.classList.add('flipping');
-    }, 70);
+    }, 140);
 }
 
 function displayCurrentPage() {
@@ -796,9 +718,24 @@ function startRotation() {
 // 啟動
 // ================================================================
 window.addEventListener('load', async () => {
+    await loadAirports();
     initBoard();
     await loadData();
     updateTimeLabel();
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // 每 30 分鐘自動從 API 拉取最新航班資料
+    setInterval(async () => {
+        try {
+            await fetchFromAPI();
+            updateTimeLabel();
+            displayCurrentPage();
+        } catch(e) {
+            console.warn('Auto-refresh failed:', e.message);
+        }
+    }, CONFIG.refreshMs);
+
     startRotation();
 });
 </script>
