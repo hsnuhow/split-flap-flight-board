@@ -1,4 +1,12 @@
 {
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": ["node_modules", ".git"],
+      "predeploy": ["cp public/data/airports.json functions/airports.json"]
+    }
+  ],
   "hosting": {
     "public": "public",
     "ignore": [
@@ -28,6 +36,10 @@
       }
     ],
     "rewrites": [
+      {
+        "source": "/api/**",
+        "function": "api"
+      },
       {
         "source": "**",
         "destination": "/index.html"
