@@ -115,19 +115,19 @@
             min-height: 0;
         }
 
-        /* Header row */
-        .row.header-row .flap .top,
-        .row.header-row .flap .bottom,
-        .row.header-row .flap .flipper {
+        /* Header row: static full-height text, no flip animation */
+        .row.header-row .flap .top {
+            clip-path: none;
             background-color: #252525;
             color: #ffcc00;
+            border-color: #333;
         }
-
-        /* 標題列下半部設為黑色，避免與第一資料列間出現黃色間隙 */
-        .row.header-row .flap .bottom {
-            background-color: #111;
-            color: transparent;
-            border-color: #111;
+        .row.header-row .flap .bottom,
+        .row.header-row .flap .flipper {
+            display: none;
+        }
+        .row.header-row .flap::after {
+            display: none;
         }
 
         .column {
