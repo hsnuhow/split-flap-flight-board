@@ -441,6 +441,28 @@ function normalizeFlight(raw, type) {
     };
 }
 
+// ================================================================
+// 去重：同航班號 + 時刻 + 機場代碼 視為同一筆
+// 若狀態不同，保留「非空白且非準時/ON TIME」的那筆（較新狀態）
+// ================================================================
+function deduplicateFlights(flights) {
+    const seen = new Map();
+    for (const f of flights) {
+        const key = `${f.flightNumber}|${f.scheduledTime}|${f.airportCode}`;
+        if (!seen.has(key)) {
+            seen.set(key, f);
+        } else {
+            // 若現有的是「準時/ON TIME/空白」，新的有更具體狀態則替換
+            const existing = seen.get(key);
+            const bland = /^(準時|ON TIME|)$/i;
+            if (bland.test(existing.statusZh) && !bland.test(f.statusZh)) {
+                seen.set(key, f);
+            }
+        }
+    }
+    return Array.from(seen.values());
+}
+
 // 呼叫 Firebase Cloud Function（憑證安全存於後端）
 async function fetchFromAPI() {
     const [arrRes, depRes] = await Promise.all([
@@ -454,8 +476,8 @@ async function fetchFromAPI() {
     const arrData = await arrRes.json();
     const depData = await depRes.json();
 
-    flightData.arrival   = arrData.flights || [];
-    flightData.departure = depData.flights || [];
+    flightData.arrival   = deduplicateFlights(arrData.flights || []);
+    flightData.departure = deduplicateFlights(depData.flights || []);
     updatedAt = arrData.updatedAt || new Date().toISOString();
 
     // 更新 localStorage cache
@@ -474,12 +496,12 @@ async function loadFromStaticFiles() {
 
     if (arrRes.ok) {
         const d = await arrRes.json();
-        flightData.arrival = d.flights || [];
+        flightData.arrival = deduplicateFlights(d.flights || []);
         updatedAt = d.updatedAt || updatedAt;
     }
     if (depRes.ok) {
         const d = await depRes.json();
-        flightData.departure = d.flights || [];
+        flightData.departure = deduplicateFlights(d.flights || []);
         if (!updatedAt) updatedAt = d.updatedAt;
     }
 }

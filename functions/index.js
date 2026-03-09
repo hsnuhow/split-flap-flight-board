@@ -50,9 +50,26 @@ function parseStatus(raw, rawEn) {
     return { zh: zh || str, en: en || str };
 }
 
+function deduplicateFlights(flights) {
+    const seen = new Map();
+    for (const f of flights) {
+        const key = `${f.flightNumber}|${f.scheduledTime}|${f.airportCode}`;
+        if (!seen.has(key)) {
+            seen.set(key, f);
+        } else {
+            const bland = /^(準時|ON TIME|)$/i;
+            const existing = seen.get(key);
+            if (bland.test(existing.statusZh) && !bland.test(f.statusZh)) {
+                seen.set(key, f);
+            }
+        }
+    }
+    return Array.from(seen.values());
+}
+
 function normalizeFlights(rawList, type) {
     const isArr = (type === 'arrival');
-    return rawList
+    const normalized = rawList
         .filter(f => f.AirlineID === AIRLINE && !f.IsCargo)
         .map(f => {
             const airportCode = isArr ? f.DepartureAirportID : f.ArrivalAirportID;
@@ -71,7 +88,8 @@ function normalizeFlights(rawList, type) {
                 statusZh:      s.zh,
                 statusEn:      s.en,
             };
-        })
+        });
+    return deduplicateFlights(normalized)
         .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
 }
 
