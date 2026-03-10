@@ -153,13 +153,63 @@ firebase deploy --only hosting,functions
 
 ## 優先順序建議
 
-| 優先 | 項目 | 難度 |
-|------|------|------|
-| 高   | D1 黃色間隙 | 低（一行 CSS） |
-| 高   | D5 即時時間顯示 | 低（幾行 JS） |
-| 高   | D3 翻牌速度 | 低（改常數） |
-| 中   | D4 Logo 放大 | 低（改 CSS） |
-| 中   | D2 字寬字高 | 低（改 CSS） |
-| 中   | F3 30 分鐘自動更新 | 中（JS 邏輯） |
-| 低   | F2 機場表單一來源 | 中（重構） |
-| 低   | F1 憑證安全（Cloud Function） | 中高（新增 Function） |
+| 優先 | 項目 | 難度 | 狀態 |
+|------|------|------|------|
+| 高   | D1 黃色間隙 | 低（一行 CSS） | ✅ 已完成（前次） |
+| 高   | D5 即時時間顯示 | 低（幾行 JS） | ✅ 已完成（前次） |
+| 高   | D3 翻牌速度 | 低（改常數） | ✅ 已完成（前次） |
+| 中   | D4 Logo 放大 | 低（改 CSS） | ✅ 已完成（前次） |
+| 中   | D2 字寬字高 | 低（改 CSS） | ✅ 已完成（前次） |
+| 中   | F3 30 分鐘自動更新 | 中（JS 邏輯） | ✅ 已完成（前次） |
+| 低   | F2 機場表單一來源 | 中（重構） | ✅ 已完成（前次） |
+| 低   | F1 憑證安全（Cloud Function） | 中高（新增 Function） | ✅ 已完成（前次） |
+
+---
+
+## 開發日誌
+
+### 2026-03-10｜Gemini 機場代號解析 + 部署完成
+
+#### 本次開發項目
+
+**G1｜Gemini API 機場代號動態解析**
+
+- **問題**：TDX API 回傳的 ICAO 機場代號（如 ONT、PRG、BWN 等）不在 `airports.json` 靜態表中，前端直接顯示原始英文代號。
+- **解法**：Cloud Function 新增三層機場名稱解析架構：
+  1. `airports.json`（靜態，同步，最快）
+  2. Firestore `airportNames` collection（動態快取，Gemini 解析後永久存入）
+  3. Gemini API `gemini-2.5-flash-lite`（未知代號首次遇到時呼叫，結果存入 Firestore）
+- **安全性**：`GEMINI_API_KEY` 存於 Firebase Secret Manager，前端完全無法存取
+- **效能**：同一次 API 請求內，每個未知代號只呼叫一次 Gemini（批次去重）
+
+**G2｜Firestore 錯誤快取修正**
+
+- Gemini 首次解析時將部分 TDX 自訂代號誤認（BWN → 台南、PEN → 屏東、ROR → 台東、TAK → 台東、TFU → 台東）
+- 修正方式：將正確對照直接寫入 `airports.json`（Layer 1 優先），並清除 Firestore 錯誤快取
+- 同時將 Gemini 正確解析的代號（CNX、ONT、PHX、PRG 等）一併收入靜態表
+
+**G3｜`?forcereflash` 強制更新功能**
+
+- 新增 URL 參數 `?forcereflash`：繞過所有快取，立即重新呼叫 TDX API
+- 靜默更新（無 overlay），`update-label` 顯示進度
+- 呼叫完成後自動以 `history.replaceState` 清除網址參數
+
+#### 修改的檔案
+
+| 檔案 | 變更內容 |
+|------|---------|
+| `functions/index.js` | 新增 Gemini + Firestore 三層解析；GEMINI_API_KEY secret |
+| `functions/package.json` | 新增 `firebase-admin: ^13.0.0` |
+| `firebase.json` | 新增 `firestore.rules` 設定 |
+| `firestore.rules` | 新增（拒絕所有客戶端存取） |
+| `public/data/airports.json` | 新增 9 個機場（含修正 CTU 為成都雙流、新增 TFU 成都天府）|
+| `public/index.html` | 新增 `?forcereflash` URL 參數處理邏輯 |
+| `scripts/fix_airport_cache.js` | 新增一次性 Firestore 快取修正腳本 |
+
+#### Firebase 環境狀態
+
+- Firebase 方案：已升級至 **Blaze（pay-as-you-go）**
+- Secret Manager 已設定：`TDX_CLIENT_ID`、`TDX_CLIENT_SECRET`、`GEMINI_API_KEY`
+- Firestore 已建立（asia-east1），rules 已部署（拒絕客戶端存取）
+- Cloud Function `api`（asia-east1）：已部署，正常運作
+- Artifact Registry 清理政策：已設定（images > 1 天自動刪除）

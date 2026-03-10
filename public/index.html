@@ -524,6 +524,23 @@ function loadFromLocalStorage() {
 async function loadData() {
     const params = new URLSearchParams(window.location.search);
 
+    if (params.has('forcereflash')) {
+        // 強制重新呼叫 TDX API，繞過所有快取，靜默無 overlay
+        const label = document.getElementById('update-label');
+        label.textContent = '強制更新中…';
+        try {
+            await fetchFromAPI();
+            label.textContent = '✓ 已強制更新';
+            setTimeout(() => updateTimeLabel(), 3000);
+        } catch (e) {
+            console.warn('Force refresh failed:', e.message);
+            label.textContent = '強制更新失敗';
+        }
+        // 移除網址參數，避免重整時重複觸發
+        history.replaceState(null, '', window.location.pathname);
+        return;
+    }
+
     if (params.has('refresh')) {
         // Show info overlay, then try live API
         document.getElementById('overlay').classList.add('show');

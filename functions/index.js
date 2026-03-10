@@ -8,31 +8,100 @@
  *
  * 端點：GET /api/flights?type=arrival|departure
  *
+ * 機場名稱解析（三層）：
+ *   1. airports.json       靜態查對表（最快，無網路）
+ *   2. Firestore airportNames  動態快取（Gemini 解析過的結果）
+ *   3. Gemini API          未知代號的最終後備，結果自動存入 Firestore
+ *
  * 部署前需設定 secrets（只需執行一次）：
  *   firebase functions:secrets:set TDX_CLIENT_ID
  *   firebase functions:secrets:set TDX_CLIENT_SECRET
+ *   firebase functions:secrets:set GEMINI_API_KEY
  * ─────────────────────────────────────────────────────────────
  */
 
-const { onRequest }    = require('firebase-functions/v2/https');
-const { defineSecret } = require('firebase-functions/params');
+const { onRequest }     = require('firebase-functions/v2/https');
+const { defineSecret }  = require('firebase-functions/params');
+const { initializeApp } = require('firebase-admin/app');
+const { getFirestore }  = require('firebase-admin/firestore');
 
 const TDX_CLIENT_ID     = defineSecret('TDX_CLIENT_ID');
 const TDX_CLIENT_SECRET = defineSecret('TDX_CLIENT_SECRET');
+const GEMINI_API_KEY    = defineSecret('GEMINI_API_KEY');
 
 const AIRPORT    = 'TPE';
 const AIRLINE    = 'CI';
 const TDX_BASE   = 'https://tdx.transportdata.tw/api/basic/v2/Air/FIDS/Airport';
 const TOKEN_URL  = 'https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
 
-// ── 機場名稱（由 predeploy hook 從 public/data/airports.json 複製而來）──
+// ── 機場名稱靜態查對表（由 predeploy hook 從 public/data/airports.json 複製而來）──
 const AIRPORT_NAMES = require('./airports.json');
 
-function getAirportName(code, lang) {
-    if (!code) return '---';
+initializeApp();
+const db = getFirestore();
+
+// ── 三層機場名稱解析 ─────────────────────────────────────────
+// Layer 1: airports.json → Layer 2: Firestore → Layer 3: Gemini（存入 Firestore）
+async function resolveAirport(code, geminiKey) {
+    if (!code) return { zh: '---', en: '---' };
+
+    // Layer 1: 靜態 airports.json（同步，無網路請求）
     const entry = AIRPORT_NAMES[code];
-    if (!entry) return code;
-    return lang === 'zh' ? entry.zh : entry.en;
+    if (entry) return { zh: entry.zh, en: entry.en };
+
+    // Layer 2: Firestore 動態快取
+    try {
+        const doc = await db.collection('airportNames').doc(code).get();
+        if (doc.exists) {
+            const d = doc.data();
+            return { zh: d.zh || code, en: d.en || code };
+        }
+    } catch (e) {
+        console.warn(`[Firestore] lookup failed for ${code}:`, e.message);
+    }
+
+    // Layer 3: Gemini API（只在未知代號時呼叫，結果永久存入 Firestore）
+    if (geminiKey) {
+        try {
+            const prompt =
+                `給定 ICAO 機場代號 "${code}"，` +
+                `請提供台灣航班資訊顯示板慣用的繁體中文城市名稱（簡短，最多 6 個漢字）` +
+                `與英文短名稱（最多 14 字元）。` +
+                `只回傳 JSON，格式：{"zh":"城市名","en":"City Name"}，不要其他文字。`;
+
+            const res = await fetch(`${GEMINI_URL}?key=${geminiKey}`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents:         [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: 'application/json' },
+                }),
+            });
+
+            if (res.ok) {
+                const json   = await res.json();
+                const text   = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                const parsed = JSON.parse(text);
+                if (parsed.zh && parsed.en) {
+                    await db.collection('airportNames').doc(code).set({
+                        zh:        parsed.zh,
+                        en:        parsed.en,
+                        source:    'gemini',
+                        createdAt: new Date().toISOString(),
+                    });
+                    console.log(`[Gemini] Resolved ${code} → ${parsed.zh} / ${parsed.en}`);
+                    return { zh: parsed.zh, en: parsed.en };
+                }
+            } else {
+                console.warn(`[Gemini] HTTP ${res.status} for ${code}`);
+            }
+        } catch (e) {
+            console.warn(`[Gemini] lookup failed for ${code}:`, e.message);
+        }
+    }
+
+    return { zh: code, en: code }; // 最終退路：回傳原始 ICAO 代號
 }
 
 function formatTime(iso) {
@@ -57,7 +126,7 @@ function deduplicateFlights(flights) {
         if (!seen.has(key)) {
             seen.set(key, f);
         } else {
-            const bland = /^(準時|ON TIME|)$/i;
+            const bland    = /^(準時|ON TIME|)$/i;
             const existing = seen.get(key);
             if (bland.test(existing.statusZh) && !bland.test(f.statusZh)) {
                 seen.set(key, f);
@@ -67,28 +136,45 @@ function deduplicateFlights(flights) {
     return Array.from(seen.values());
 }
 
-function normalizeFlights(rawList, type) {
-    const isArr = (type === 'arrival');
-    const normalized = rawList
-        .filter(f => f.AirlineID === AIRLINE && !f.IsCargo)
-        .map(f => {
-            const airportCode = isArr ? f.DepartureAirportID : f.ArrivalAirportID;
-            const time        = isArr ? formatTime(f.ScheduleArrivalTime) : formatTime(f.ScheduleDepartureTime);
-            const s = parseStatus(
-                f.ArrivalRemark   || f.DepartureRemark   || '',
-                f.ArrivalRemarkEn || f.DepartureRemarkEn || ''
-            );
-            return {
-                terminal:      f.Terminal || '--',
-                flightNumber:  `${f.AirlineID}${f.FlightNumber}`,
-                airportCode:   airportCode || '',
-                airportNameZh: getAirportName(airportCode, 'zh'),
-                airportNameEn: getAirportName(airportCode, 'en'),
-                scheduledTime: time,
-                statusZh:      s.zh,
-                statusEn:      s.en,
-            };
-        });
+async function normalizeFlights(rawList, type, geminiKey) {
+    const isArr   = (type === 'arrival');
+    const filtered = rawList.filter(f => f.AirlineID === AIRLINE && !f.IsCargo);
+
+    // 收集唯一機場代號，批次並行解析（每個代號在同一請求內只呼叫一次 Gemini）
+    const uniqueCodes = [
+        ...new Set(
+            filtered
+                .map(f => isArr ? f.DepartureAirportID : f.ArrivalAirportID)
+                .filter(Boolean)
+        ),
+    ];
+    const codeMap = {};
+    await Promise.all(uniqueCodes.map(async (code) => {
+        codeMap[code] = await resolveAirport(code, geminiKey);
+    }));
+
+    const normalized = filtered.map(f => {
+        const airportCode = isArr ? f.DepartureAirportID : f.ArrivalAirportID;
+        const time        = isArr
+            ? formatTime(f.ScheduleArrivalTime)
+            : formatTime(f.ScheduleDepartureTime);
+        const s       = parseStatus(
+            f.ArrivalRemark   || f.DepartureRemark   || '',
+            f.ArrivalRemarkEn || f.DepartureRemarkEn || ''
+        );
+        const airport = codeMap[airportCode] || { zh: airportCode || '---', en: airportCode || '---' };
+        return {
+            terminal:      f.Terminal || '--',
+            flightNumber:  `${f.AirlineID}${f.FlightNumber}`,
+            airportCode:   airportCode || '',
+            airportNameZh: airport.zh,
+            airportNameEn: airport.en,
+            scheduledTime: time,
+            statusZh:      s.zh,
+            statusEn:      s.en,
+        };
+    });
+
     return deduplicateFlights(normalized)
         .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
 }
@@ -109,7 +195,7 @@ async function getToken(clientId, clientSecret) {
     return (await res.json()).access_token;
 }
 
-async function fetchFlights(type, token) {
+async function fetchFlights(type, token, geminiKey) {
     const typePath = type === 'arrival' ? 'Arrival' : 'Departure';
     const filter   = `AirlineID eq '${AIRLINE}'`;
     const url      = `${TDX_BASE}/${typePath}/${AIRPORT}?$filter=${encodeURIComponent(filter)}&$format=JSON`;
@@ -120,12 +206,12 @@ async function fetchFlights(type, token) {
     if (!res.ok) throw new Error(`TDX ${type} ${res.status}`);
     const raw  = await res.json();
     const list = Array.isArray(raw) ? raw : (raw.data || raw.Flights || []);
-    return normalizeFlights(list, type);
+    return normalizeFlights(list, type, geminiKey);
 }
 
 // ── Cloud Function 進入點 ────────────────────────────────────
 exports.api = onRequest(
-    { secrets: [TDX_CLIENT_ID, TDX_CLIENT_SECRET], region: 'asia-east1' },
+    { secrets: [TDX_CLIENT_ID, TDX_CLIENT_SECRET, GEMINI_API_KEY], region: 'asia-east1' },
     async (req, res) => {
         // CORS
         res.set('Access-Control-Allow-Origin', '*');
@@ -139,11 +225,12 @@ exports.api = onRequest(
         }
 
         try {
-            const token   = await getToken(TDX_CLIENT_ID.value(), TDX_CLIENT_SECRET.value());
-            const flights = await fetchFlights(type, token);
+            const geminiKey = GEMINI_API_KEY.value();
+            const token     = await getToken(TDX_CLIENT_ID.value(), TDX_CLIENT_SECRET.value());
+            const flights   = await fetchFlights(type, token, geminiKey);
             res.set('Cache-Control', 'no-store');
             res.json({ updatedAt: new Date().toISOString(), airport: AIRPORT, flights });
-        } catch(e) {
+        } catch (e) {
             console.error('API error:', e.message);
             res.status(502).json({ error: e.message });
         }
