@@ -7,8 +7,15 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
+        @font-face {
+            font-family: 'NotoSansTC';
+            src: url('fonts/NotoSansTC-VariableFont_wght.ttf') format('truetype');
+            font-weight: 100 900;
+            font-display: block;
+        }
+
         body {
-            background-color: #0a0a0a;
+            background-color: #003087;
             width: 100vw;
             height: 100vh;
             overflow: hidden;
@@ -45,7 +52,6 @@
         #cal-logo {
             height: 10vh;
             object-fit: contain;
-            filter: drop-shadow(0 0 6px rgba(200,0,0,0.3));
         }
 
         #board-title-block {
@@ -115,19 +121,21 @@
             min-height: 0;
         }
 
-        /* Header row: static full-height text, no flip animation */
-        .row.header-row .flap .top {
-            clip-path: none;
-            background-color: #252525;
+        /* Header row: single solid block per column, no flap cells */
+        .header-cell {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: #ffcc00;
-            border-color: #333;
-        }
-        .row.header-row .flap .bottom,
-        .row.header-row .flap .flipper {
-            display: none;
-        }
-        .row.header-row .flap::after {
-            display: none;
+            font-size: 1.2vw;
+            font-weight: bold;
+            background-color: #252525;
+            border: 1px solid #333;
+            border-radius: 2px;
+            letter-spacing: 0.15em;
+            white-space: nowrap;
+            overflow: hidden;
         }
 
         .column {
@@ -141,7 +149,6 @@
             position: relative;
             background-color: #000;
             border-radius: 2px;
-            perspective: 500px;
             min-width: 0;
         }
 
@@ -157,7 +164,7 @@
             justify-content: center;
             align-items: center;
             color: #e8e8e8;
-            font-size: 1.9vw;
+            font-size: 1.5vw;
             font-weight: bold;
             background-color: #111;
             border: 1px solid #252525;
@@ -190,13 +197,31 @@
             pointer-events: none;
         }
 
+        /* 英文翻牌動畫（保持 scaleX 0.9） */
         .flap.flipping .flipper {
             animation: flip-down 0.13s cubic-bezier(0.4, 0.0, 1, 1) forwards;
         }
 
         @keyframes flip-down {
-            0%   { transform: scaleX(0.9) rotateX(0deg); }
-            100% { transform: scaleX(0.9) rotateX(-90deg); }
+            0%   { transform: perspective(500px) scaleX(0.9) rotateX(0deg); }
+            100% { transform: perspective(500px) scaleX(0.9) rotateX(-90deg); }
+        }
+
+        /* 中文翻牌：思源黑體，中文為寬度基準（scaleX 1.0，不壓縮） */
+        .flap.cjk .top,
+        .flap.cjk .bottom,
+        .flap.cjk .flipper {
+            font-family: 'NotoSansTC', sans-serif;
+            transform: scaleX(1.0);
+        }
+
+        .flap.cjk.flipping .flipper {
+            animation: flip-down-cjk 0.13s cubic-bezier(0.4, 0.0, 1, 1) forwards;
+        }
+
+        @keyframes flip-down-cjk {
+            0%   { transform: perspective(500px) scaleX(1.0) rotateX(0deg); }
+            100% { transform: perspective(500px) scaleX(1.0) rotateX(-90deg); }
         }
 
         /* ── Status Bar ───────────────────────────── */
@@ -368,7 +393,7 @@ function airportName(code, lang) {
 // COL_LENGTHS: 每欄「字元數」，同時也是 flex 比例
 //   航廈 | 航班     | 目的地/來源地     | 時間   | 狀態
 // ================================================================
-const COL_LENGTHS = [4, 8, 16, 6, 12];
+const COL_LENGTHS = [7, 18, 8, 4, 4, 10]; // 時間7、目的地18、航班8、航廈4、登機門4、狀態10
 
 const PHASES = [
     { type:'arrival',   lang:'zh', label:'入境　中文' },
@@ -378,19 +403,58 @@ const PHASES = [
 ];
 
 const HEADERS = {
-    'arrival-zh':   ['航廈','航班','來源地','時間','狀態'],
-    'arrival-en':   ['TERM','FLIGHT','FROM','TIME','STATUS'],
-    'departure-zh': ['航廈','航班','目的地','時間','狀態'],
-    'departure-en': ['TERM','FLIGHT','DESTINATION','TIME','STATUS'],
+    'arrival-zh':   ['時間','來源地','航班','航廈','登機門','狀態'],
+    'arrival-en':   ['TIME','FROM','FLIGHT','TERM','GATE','STATUS'],
+    'departure-zh': ['時間','目的地','航班','航廈','登機門','狀態'],
+    'departure-en': ['TIME','DEST','FLIGHT','TERM','GATE','STATUS'],
 };
 
 const RANDOM_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
+
+// 判斷是否為中文字元
+function isCJK(ch) {
+    return /[\u4e00-\u9fff\u3000-\u303f]/.test(ch);
+}
+
+
+// ================================================================
+// 資料過濾（出境：航班白名單；入境：目的地機場白名單）
+// ================================================================
+const ALLOWED_DEPARTURE_FLIGHTS = new Set([
+    'CI81','CI36','CI12','CI24','CI73','CI61','CI63','CI75',
+    'CI22','CI4','CI67','CI57','CI8','CI51','CI32','CI53'
+]);
+const TARGET_AIRPORTS = new Set([
+    'LHR','PHX','JFK','ONT','AMS','FRA','VIE','FCO',
+    'SEA','SFO','PRG','MEL','LAX','SYD','YVR','BNE','AKL'
+]);
+
+function filterFlights(flights, type) {
+    if (type === 'departure') {
+        return flights.filter(f => ALLOWED_DEPARTURE_FLIGHTS.has(f.flightNumber));
+    }
+    return flights.filter(f => TARGET_AIRPORTS.has(f.airportCode));
+}
+
+function mergeCi53(flights) {
+    const ci53 = flights.filter(f => f.flightNumber === 'CI53');
+    if (ci53.length <= 1) return flights;
+    const merged = {
+        ...ci53[0],
+        airportCode:   'BNE/AKL',
+        airportNameZh: '布里斯本/奧克蘭',
+        airportNameEn: 'Brisbane/Auckland',
+    };
+    return [...flights.filter(f => f.flightNumber !== 'CI53'), merged]
+        .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+}
 
 // ================================================================
 // 狀態
 // ================================================================
 let flightData  = { arrival: [], departure: [] };
 let flapElements = [];   // [rowIdx][colIdx][charIdx] = {container, top, bottom, flipper, current}
+let headerCells  = [];   // [colIdx] = header cell DOM element
 let phaseIdx    = 0;
 let pageIdx     = 0;
 let rotationTimer   = null;
@@ -476,8 +540,8 @@ async function fetchFromAPI() {
     const arrData = await arrRes.json();
     const depData = await depRes.json();
 
-    flightData.arrival   = deduplicateFlights(arrData.flights || []);
-    flightData.departure = deduplicateFlights(depData.flights || []);
+    flightData.arrival   = mergeCi53(filterFlights(deduplicateFlights(arrData.flights || []), 'arrival'));
+    flightData.departure = mergeCi53(filterFlights(deduplicateFlights(depData.flights || []), 'departure'));
     updatedAt = arrData.updatedAt || new Date().toISOString();
 
     // 更新 localStorage cache
@@ -496,12 +560,12 @@ async function loadFromStaticFiles() {
 
     if (arrRes.ok) {
         const d = await arrRes.json();
-        flightData.arrival = deduplicateFlights(d.flights || []);
+        flightData.arrival = mergeCi53(filterFlights(deduplicateFlights(d.flights || []), 'arrival'));
         updatedAt = d.updatedAt || updatedAt;
     }
     if (depRes.ok) {
         const d = await depRes.json();
-        flightData.departure = deduplicateFlights(d.flights || []);
+        flightData.departure = mergeCi53(filterFlights(deduplicateFlights(d.flights || []), 'departure'));
         if (!updatedAt) updatedAt = d.updatedAt;
     }
 }
@@ -514,8 +578,8 @@ function loadFromLocalStorage() {
         if (!cache.updatedAt) return false;
         const age = Date.now() - new Date(cache.updatedAt).getTime();
         if (age > 24 * 60 * 60 * 1000) return false; // expired after 24h
-        flightData.arrival   = cache.arrival   || [];
-        flightData.departure = cache.departure  || [];
+        flightData.arrival   = mergeCi53(filterFlights(cache.arrival   || [], 'arrival'));
+        flightData.departure = mergeCi53(filterFlights(cache.departure || [], 'departure'));
         updatedAt = cache.updatedAt;
         return true;
     } catch { return false; }
@@ -596,6 +660,24 @@ function initBoard() {
         const rowDiv = document.createElement('div');
         rowDiv.className = 'row' + (rowIdx === 0 ? ' header-row' : '');
 
+        if (rowIdx === 0) {
+            // 標題列：每欄一個整塊 header-cell，不使用翻牌格
+            headerCells = [];
+            COL_LENGTHS.forEach(colLen => {
+                const colDiv = document.createElement('div');
+                colDiv.className = 'column';
+                colDiv.style.flex = colLen;
+                const cell = document.createElement('div');
+                cell.className = 'header-cell';
+                colDiv.appendChild(cell);
+                rowDiv.appendChild(colDiv);
+                headerCells.push(cell);
+            });
+            board.appendChild(rowDiv);
+            flapElements.push([]); // 佔位，保持 rowIdx 對齊
+            continue;
+        }
+
         const flapRow = [];
 
         COL_LENGTHS.forEach(colLen => {
@@ -627,11 +709,33 @@ function initBoard() {
 // 顯示邏輯
 // ================================================================
 function getRowData(flight, type, lang) {
+    // 目的地：若靜態資料未解析（存了原始代號），即時 fallback 查 AIRPORT_NAMES
+    const code = flight.airportCode || '';
+    const destZh = (flight.airportNameZh && flight.airportNameZh !== code)
+        ? flight.airportNameZh : airportName(code, 'zh');
+    const destEn = (flight.airportNameEn && flight.airportNameEn !== code)
+        ? flight.airportNameEn : airportName(code, 'en');
+
+    // 航班：首尾留空 → " CI81   "（8 bits）
+    const fnDisplay = (' ' + flight.flightNumber).padEnd(7, ' ') + ' ';
+
+    // 航廈：首尾留空 → " T1 "（4 bits）
+    const term = (flight.terminal || '-').toString().trim();
+    const termDisplay = ' T' + term.slice(0, 1) + ' ';
+
+    // 登機門：首尾留空 → " A7 "（4 bits）
+    const rawGate = (flight.gate || '--').trim();
+    const gateDisplay = ' ' + rawGate.slice(0, 2) + ' ';
+
+    // 時間：首尾留空 → " 23:55 "（7 bits）
+    const timeDisplay = ' ' + flight.scheduledTime + ' ';
+
     return [
-        flight.terminal,
-        flight.flightNumber,
-        lang === 'zh' ? flight.airportNameZh : flight.airportNameEn,
-        flight.scheduledTime,
+        timeDisplay,
+        lang === 'zh' ? destZh : destEn,
+        fnDisplay,
+        termDisplay,
+        gateDisplay,
         lang === 'zh' ? (flight.statusZh || '') : (flight.statusEn || ''),
     ];
 }
@@ -652,6 +756,7 @@ function updateRow(rowIdx, colData) {
                 flapObj.bottom.textContent  = targetChar;
                 flapObj.flipper.textContent = targetChar;
                 flapObj.current             = targetChar;
+                flapObj.container.classList.toggle('cjk', isCJK(targetChar));
             } else {
                 const delay = Math.random() * 760;
                 setTimeout(() => triggerFlip(flapObj, targetChar), delay);
@@ -673,6 +778,7 @@ function triggerFlip(flapObj, targetChar) {
         if (flipCount >= maxFlips) {
             clearInterval(tick);
             flapObj.current = targetChar;
+            flapObj.container.classList.toggle('cjk', isCJK(targetChar));
         }
 
         flapObj.flipper.textContent = flapObj.top.textContent;
@@ -704,8 +810,8 @@ function displayCurrentPage() {
     const noData = flightData.arrival.length === 0 && flightData.departure.length === 0;
     document.getElementById('no-data-msg').style.display = noData ? 'block' : 'none';
 
-    // Header row (row 0)
-    updateRow(0, HEADERS[phaseKey]);
+    // Header row (row 0)：直接寫入，不翻牌
+    HEADERS[phaseKey].forEach((text, i) => { headerCells[i].textContent = text; });
 
     // Data rows
     const pageFlights = flights.slice(pageIdx * CONFIG.pageSize, (pageIdx + 1) * CONFIG.pageSize);

@@ -88,5 +88,6 @@
   "IAH": { "zh": "休士頓",      "en": "Houston" },
   "MSP": { "zh": "明尼亞波利",  "en": "Minneapolis" },
   "DTW": { "zh": "底特律",      "en": "Detroit" },
-  "BOS": { "zh": "波士頓",      "en": "Boston" }
+  "BOS": { "zh": "波士頓",      "en": "Boston" },
+  "AKL": { "zh": "奧克蘭",      "en": "Auckland" }
 }

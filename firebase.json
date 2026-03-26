@@ -10,6 +10,11 @@
       "predeploy": ["cp public/data/airports.json functions/airports.json"]
     }
   ],
+  "emulators": {
+    "hosting": {
+      "port": 5003
+    }
+  },
   "hosting": {
     "public": "public",
     "ignore": [

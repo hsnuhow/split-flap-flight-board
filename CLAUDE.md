@@ -213,3 +213,49 @@ firebase deploy --only hosting,functions
 - Firestore 已建立（asia-east1），rules 已部署（拒絕客戶端存取）
 - Cloud Function `api`（asia-east1）：已部署，正常運作
 - Artifact Registry 清理政策：已設定（images > 1 天自動刪除）
+
+---
+
+### 2026-03-26｜字型、標題列、顯示優化
+
+#### 本次開發項目
+
+**H1｜NotoSansTC 思源黑體本機字型載入**
+
+- **問題**：中文字元使用系統字型（PingFang SC）回退，在不同裝置顯示不一致。
+- **解法**：新增 `@font-face` 從 `public/fonts/NotoSansTC-VariableFont_wght.ttf` 載入，部署時字型隨 Firebase Hosting 一併發佈，無任何外部 CDN 依賴。
+
+**H2｜白色條紋修正**
+
+- **問題**：翻牌動畫時，row 之間出現白色細條紋（GPU compositing artifact）。
+- **根因**：`.flap` 設定 `perspective: 500px` 作為父層 3D context，與子層 `clip-path` 產生 sub-pixel rendering 衝突。
+- **修正**：移除 `.flap { perspective: 500px }`，改在 `@keyframes` 的 `transform` 函式中加入 `perspective(500px)`，讓 perspective 與 rotateX 套用於同一元素。
+
+**H3｜標題列重構為整塊設計**
+
+- **問題**：標題列使用與資料列相同的翻牌格結構（N 個小格），造成欄名被截斷且需複雜的 bit 數計算。
+- **修正**：
+  - 每欄改為單一 `.header-cell` div，`display: flex; justify-content: center`
+  - `initBoard()` 新增 row 0 獨立建構邏輯，`flapElements[0] = []` 佔位
+  - `displayCurrentPage()` 改為直接 `headerCells[i].textContent = text`
+  - 移除 `formatHeaderRow()` 函式（不再需要 bit 數計算）
+  - 欄名可直接在 `HEADERS` 物件修改（`public/index.html` 第 405–410 行），不需計算字數
+
+**H4｜中文字型寬度設計重構（中文優先）**
+
+- **問題**：翻牌格寬度以英文 Courier New（~0.6em）為標準，中文全形字（1.0em）超出格寬被截斷；強制 `scaleX(0.6)` 壓縮中文顯示失真。
+- **設計理念**：改以中文字寬為格子標準寬度（scaleX 1.0），英文配合壓縮。
+- **修正**：
+  - `font-size: 1.9vw → 1.5vw`：格子寬度約 1.58vw，1.5vw 字型讓中文字（1em）恰好容入格內
+  - CJK `.flap.cjk`：`scaleX(0.6) → scaleX(1.0)`，不壓縮中文
+  - Latin `.flap`：維持 `scaleX(0.9)`，英文字自然置中於較寬格內
+  - CJK keyframes 同步更新
+
+#### 修改的檔案
+
+| 檔案 | 變更內容 |
+|------|---------|
+| `public/index.html` | `@font-face` NotoSansTC；移除 `.flap` perspective；標題列整塊重構；font-size 1.9→1.5vw；CJK scaleX 1.0 |
+| `firebase.json` | 新增 `emulators.hosting.port: 5003`（避免 macOS port 衝突）|
+| `.claude/launch.json` | port 更新為 5003 |
+

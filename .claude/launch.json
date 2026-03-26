@@ -5,8 +5,7 @@
       "name": "Firebase Local Preview",
       "runtimeExecutable": "firebase",
       "runtimeArgs": ["emulators:start", "--only", "hosting"],
-      "port": 5001,
-      "autoPort": true
+      "port": 5003
     }
   ]
 }

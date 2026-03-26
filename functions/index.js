@@ -31,6 +31,18 @@ const GEMINI_API_KEY    = defineSecret('GEMINI_API_KEY');
 
 const AIRPORT    = 'TPE';
 const AIRLINE    = 'CI';
+
+// 出境白名單：僅顯示 CSV 指定的 16 班出境航班
+const ALLOWED_DEPARTURE_FLIGHTS = new Set([
+    '81','36','12','24','73','61','63','75',
+    '22','4','67','57','8','51','32','53'
+]);
+
+// 入境來源機場：這些目的地城市飛回 TPE 的 CI 航班
+const TARGET_AIRPORTS = new Set([
+    'LHR','PHX','JFK','ONT','AMS','FRA','VIE','FCO',
+    'SEA','SFO','PRG','MEL','LAX','SYD','YVR','BNE','AKL'
+]);
 const TDX_BASE   = 'https://tdx.transportdata.tw/api/basic/v2/Air/FIDS/Airport';
 const TOKEN_URL  = 'https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token';
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
@@ -136,9 +148,29 @@ function deduplicateFlights(flights) {
     return Array.from(seen.values());
 }
 
+// CI53（布里斯本/奧克蘭）合併：同航班號＋時刻出現 BNE + AKL 兩筆時合併為一筆
+function mergeCi53(flights) {
+    const ci53 = flights.filter(f => f.flightNumber === 'CI53');
+    if (ci53.length <= 1) return flights;
+    const merged = {
+        ...ci53[0],
+        airportCode:   'BNE/AKL',
+        airportNameZh: '布里斯本/奧克蘭',
+        airportNameEn: 'Brisbane/Auckland',
+    };
+    return [...flights.filter(f => f.flightNumber !== 'CI53'), merged];
+}
+
 async function normalizeFlights(rawList, type, geminiKey) {
     const isArr   = (type === 'arrival');
-    const filtered = rawList.filter(f => f.AirlineID === AIRLINE && !f.IsCargo);
+    const filtered = rawList.filter(f => {
+        if (f.AirlineID !== AIRLINE || f.IsCargo) return false;
+        if (isArr) {
+            return TARGET_AIRPORTS.has(f.DepartureAirportID);
+        } else {
+            return ALLOWED_DEPARTURE_FLIGHTS.has(String(f.FlightNumber));
+        }
+    });
 
     // 收集唯一機場代號，批次並行解析（每個代號在同一請求內只呼叫一次 Gemini）
     const uniqueCodes = [
@@ -170,12 +202,13 @@ async function normalizeFlights(rawList, type, geminiKey) {
             airportNameZh: airport.zh,
             airportNameEn: airport.en,
             scheduledTime: time,
+            gate:          (f.Gate || '').trim() || '--',
             statusZh:      s.zh,
             statusEn:      s.en,
         };
     });
 
-    return deduplicateFlights(normalized)
+    return mergeCi53(deduplicateFlights(normalized))
         .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
 }
 
