@@ -69,7 +69,7 @@
         }
 
         #board-title-en {
-            color: #666;
+            color: #ffffff;
             font-size: 1vw;
             letter-spacing: 0.18em;
         }
@@ -91,18 +91,31 @@
             font-weight: bold;
         }
 
-        #section-label {
-            color: #ffcc00;
-            font-size: 1.0vw;
-            font-weight: bold;
-            letter-spacing: 0.15em;
-            transition: opacity 0.25s;
-        }
-
         #update-label {
             color: #444;
             font-size: 0.6vw;
             letter-spacing: 0.05em;
+        }
+
+        /* ── Promo Bar ────────────────────────────── */
+        #promo-bar {
+            flex: 0 0 auto;
+            height: 3.5vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #2e2e2e;
+            overflow: hidden;
+        }
+
+        #promo-text {
+            color: #ffcc00;
+            font-size: 1.1vw;
+            font-family: 'NotoSansTC', sans-serif;
+            letter-spacing: 0.12em;
+            transition: opacity 0.4s ease;
+            opacity: 1;
+            white-space: nowrap;
         }
 
         /* ── Flight Board ─────────────────────────── */
@@ -279,9 +292,12 @@
         </div>
         <div id="section-indicator">
             <div id="datetime-display">&#8212;</div>
-            <div id="section-label">&#8212;</div>
             <div id="update-label"></div>
         </div>
+    </div>
+
+    <div id="promo-bar">
+        <div id="promo-text"></div>
     </div>
 
     <div id="flight-board"></div>
@@ -332,6 +348,8 @@ function isCJK(ch) {
 // &#29366;&#24907;
 // ================================================================
 let flightData   = { zh: [], en: [] };
+let promoMessages = [];
+let promoIdx      = 0;
 let flapElements = [];  // [rowIdx][colIdx] = [{container, top, bottom, flipper, current}, ...]
 let headerCells  = [];  // [colIdx] = header cell DOM element
 let phaseIdx     = 0;
@@ -352,6 +370,26 @@ async function loadData() {
     } catch(e) {
         console.warn('Failed to load flight data:', e);
     }
+}
+
+async function loadPromo() {
+    try {
+        const res = await fetch('data/promo.json');
+        if (res.ok) promoMessages = await res.json();
+    } catch(e) {
+        console.warn('Failed to load promo data:', e);
+    }
+}
+
+function updatePromo() {
+    if (promoMessages.length === 0) return;
+    const el = document.getElementById('promo-text');
+    el.style.opacity = '0';
+    setTimeout(() => {
+        el.textContent = promoMessages[promoIdx % promoMessages.length];
+        el.style.opacity = '1';
+        promoIdx = (promoIdx + 1) % promoMessages.length;
+    }, 400);
 }
 
 // ================================================================
@@ -494,11 +532,6 @@ function displayCurrentPage() {
     const flights = flightData[phase.lang];
     const totalPages = Math.max(1, Math.ceil(flights.length / CONFIG.pageSize));
 
-    // Section label (fade)
-    const labelEl = document.getElementById('section-label');
-    labelEl.style.opacity = '0';
-    setTimeout(() => { labelEl.textContent = phase.label; labelEl.style.opacity = '1'; }, 200);
-
     // Page indicator
     document.getElementById('page-indicator').textContent = `${pageIdx + 1} / ${totalPages}`;
 
@@ -534,6 +567,7 @@ function advance() {
     }
 
     displayCurrentPage();
+    updatePromo();
     startCountdown();
 }
 
@@ -558,9 +592,10 @@ function startRotation() {
 // ================================================================
 window.addEventListener('load', async () => {
     initBoard();
-    await loadData();
+    await Promise.all([loadData(), loadPromo()]);
     updateClock();
     setInterval(updateClock, 1000);
+    updatePromo();
     startRotation();
 });
 </script>
