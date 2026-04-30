@@ -11,7 +11,9 @@
 
 2026 COMPUTEX 展示用途。單一終端靜態展示，無多用戶需求。
 - 技術棧：純 HTML/CSS/JS（無 bundler）+ Firebase Hosting + GitHub Actions
-- 資料來源：台灣交通部 TDX 平台 FIDS API（中華航空 CI，桃園機場 TPE）
+- 資料來源：**靜態 JSON**（`public/data/flights-zh.json`、`flights-en.json`）由人工維護，不再串接 TDX API
+- 廣播訊息：`public/data/promo.json`，手動編輯
+- 部署：`./push-deploy.sh` 本機腳本（已 gitignore，不上傳 GitHub）
 
 ---
 
@@ -163,6 +165,8 @@ firebase deploy --only hosting,functions
 | 中   | F3 30 分鐘自動更新 | 中（JS 邏輯） | ✅ 已完成（前次） |
 | 低   | F2 機場表單一來源 | 中（重構） | ✅ 已完成（前次） |
 | 低   | F1 憑證安全（Cloud Function） | 中高（新增 Function） | ✅ 已完成（前次） |
+| —   | 廣播訊息列 Promo Bar | 低（JS + CSS） | ✅ 已完成（2026-04-30） |
+| —   | 安全稽核與舊檔清理 | 低（刪除） | ✅ 已完成（2026-04-30） |
 
 ---
 
@@ -258,4 +262,90 @@ firebase deploy --only hosting,functions
 | `public/index.html` | `@font-face` NotoSansTC；移除 `.flap` perspective；標題列整塊重構；font-size 1.9→1.5vw；CJK scaleX 1.0 |
 | `firebase.json` | 新增 `emulators.hosting.port: 5003`（避免 macOS port 衝突）|
 | `.claude/launch.json` | port 更新為 5003 |
+
+---
+
+### 2026-04-30｜廣播訊息列 + 安全稽核 + 舊檔清理
+
+#### 本次開發項目
+
+**I1｜廣播訊息列（Promo Bar）**
+
+- **需求**：在 logo-bar 與 flight-board 之間加入一條滾動廣播訊息列，顯示促銷與活動資訊。
+- **設計**：
+  - 新增 `public/data/promo.json`：16 則中文廣播訊息，JSON 陣列格式，方便日後手動編輯。
+  - HTML：`#promo-bar` > `#promo-text`，插入 logo-bar 與 flight-board 之間。
+  - CSS：高度 3.5vh，黃色文字（`#ffcc00`），NotoSansTC 字型，`transition: opacity 0.4s ease` 淡入淡出。
+  - JS：`loadPromo()` 啟動時 fetch `data/promo.json`；`updatePromo()` 每次呼叫先 opacity→0，400ms 後換文字再 opacity→1；與翻頁 `advance()` 同步，每 10 秒切換一則。
+
+**I2｜顯示細節調整**
+
+- 英文副標題顏色：`#666` → `#ffffff`（白色），提升對比與可讀性。
+- 移除右上角語言指示器 `#section-label`（中文 / ENG）：CSS 規則與 HTML 元素一併刪除，JS 中的相關更新邏輯也一併移除。
+
+**I3｜安全稽核——明文憑證清除**
+
+- **發現**：`.claude/settings.local.json` 的 `permissions.allow` 欄位中，因過去以 `printf | firebase functions:secrets:set` 管道設定 Secret 的操作記錄，留下三組明文 API 憑證：
+  - Gemini API Key
+  - TDX Client ID
+  - TDX Client Secret
+- **處置**：從 `permissions.allow` 陣列中刪除上述三個 `Bash(printf '...')` 條目。
+- **防護**：將 `.claude/settings.local.json` 明確加入專案 `.gitignore`（全域 gitignore 已保護，此為雙重保障）。
+- **建議**：三組金鑰建議至各平台輪換（Rotate），即使本次未外洩至 GitHub。
+
+**I4｜架構清理——移除舊時代檔案**
+
+架構於前次重構為純靜態 JSON 後，以下舊架構殘留檔案確認無用，一併從 git 移除：
+
+| 刪除的檔案 | 原用途 |
+|-----------|--------|
+| `public/data/arrival.json` | 舊 TDX API 抓取快照（2026-03-06） |
+| `public/data/departure.json` | 同上 |
+| `public/data/airports.json` | Cloud Function 機場代號查對表（前端不讀） |
+| `functions/index.js` | TDX + Gemini Cloud Function |
+| `functions/package.json` | 同上 |
+| `functions/package-lock.json` | 同上 |
+| `scripts/fetch_flights.js` | TDX API 資料抓取腳本 |
+| `scripts/convert_export.js` | 舊 JSON 格式轉換工具 |
+| `scripts/fix_airport_cache.js` | 一次性 Firestore 快取修正腳本 |
+| `firestore.rules` | Firestore 安全規則（不再使用 Firestore） |
+
+磁碟另行刪除（未追蹤）：`public/old_CAL_logo.png`、`public/fonts/static/`（9 個靜態字重 TTF）。
+
+**I5｜CI/CD 與設定檔更新**
+
+- `deploy.yml`：移除 `node scripts/fetch_flights.js` 步驟（資料改為手動維護）。
+- `firebase-hosting-pull-request.yml`：同上。
+- `package.json`（root）：移除 `fetch` 與 `deploy`（含 fetch）scripts，僅保留 `deploy: firebase deploy --only hosting`。
+- `.gitignore`：新增 `functions/`、`.claude/settings.local.json`、`push-deploy.sh`。
+
+**I6｜本機部署腳本**
+
+- 新增 `push-deploy.sh`（已加入 `.gitignore`，不上傳 GitHub）：
+  ```
+  ./push-deploy.sh                  # 自動 commit 訊息
+  ./push-deploy.sh "自訂 commit 訊息"
+  ```
+  自動執行 `git add -A` → `git commit` → `git push origin main` → `firebase deploy --only hosting`。
+
+#### 修改的檔案
+
+| 檔案 | 變更內容 |
+|------|---------|
+| `public/index.html` | 新增 `#promo-bar`/`#promo-text` CSS + HTML；新增 `loadPromo()`、`updatePromo()` JS；移除 `#section-label`；英文副標題改白色 |
+| `public/data/promo.json` | 新增（16 則廣播訊息 JSON 陣列） |
+| `.claude/settings.local.json` | 移除 3 筆明文憑證條目（本機檔案，不在 git） |
+| `.gitignore` | 新增 `functions/`、`.claude/settings.local.json`、`push-deploy.sh` |
+| `.github/workflows/deploy.yml` | 移除 fetch_flights 步驟，簡化為純 hosting 部署 |
+| `.github/workflows/firebase-hosting-pull-request.yml` | 同上 |
+| `package.json` | 移除 `fetch`/`deploy` scripts |
+| `push-deploy.sh` | 新增（本機腳本，已 gitignore） |
+
+#### 專案現況（截至 2026-04-30）
+
+- **前端**：`public/index.html`，單一檔案，無任何外部依賴
+- **資料**：手動維護 `flights-zh.json`、`flights-en.json`、`promo.json`
+- **字型**：`NotoSansTC-VariableFont_wght.ttf`（本機部署，無 CDN）
+- **部署**：`./push-deploy.sh` → GitHub → Firebase Hosting 自動觸發
+- **敏感資料**：無任何憑證存於 git；Firebase Secret Manager 中的 TDX/Gemini 金鑰已不被前端使用（建議輪換）
 
