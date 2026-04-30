@@ -8,10 +8,10 @@
   {"time":"23:20","destination":"Vienna",           "flight":"CI63","terminal":"T1","gate":"A8","counter":"11","status":"On Time"},
   {"time":"23:25","destination":"Rome",             "flight":"CI75","terminal":"T1","gate":"A7","counter":"11","status":"On Time"},
   {"time":"23:35","destination":"Seattle",          "flight":"CI22","terminal":"T2","gate":"D5","counter":"8", "status":"On Time"},
-  {"time":"23:45","destination":"San Francisco",    "flight":"CI4", "terminal":"T2","gate":"D4","counter":"8", "status":"On Time"},
+  {"time":"23:45","destination":"San Francisco",    "flight":"CI04", "terminal":"T2","gate":"D4","counter":"8", "status":"On Time"},
   {"time":"23:45","destination":"Prague",           "flight":"CI67","terminal":"T1","gate":"A5","counter":"11","status":"On Time"},
   {"time":"23:45","destination":"Melbourne",        "flight":"CI57","terminal":"T2","gate":"A9","counter":"7", "status":"On Time"},
-  {"time":"23:50","destination":"Los Angeles",      "flight":"CI8", "terminal":"T2","gate":"D7","counter":"8", "status":"On Time"},
+  {"time":"23:50","destination":"Los Angeles",      "flight":"CI08", "terminal":"T2","gate":"D7","counter":"8", "status":"On Time"},
   {"time":"23:50","destination":"Sydney",           "flight":"CI51","terminal":"T2","gate":"D2","counter":"7", "status":"On Time"},
   {"time":"23:55","destination":"Vancouver",        "flight":"CI32","terminal":"T2","gate":"D1","counter":"8", "status":"On Time"},
   {"time":"23:55","destination":"Brisbane/Auckland","flight":"CI53","terminal":"T2","gate":"D9","counter":"7", "status":"On Time"}
