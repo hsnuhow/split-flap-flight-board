@@ -74,7 +74,7 @@
             letter-spacing: 0.18em;
         }
 
-        /* Section indicator – top-right of logo bar */
+        /* Section indicator top-right */
         #section-indicator {
             margin-left: auto;
             display: flex;
@@ -197,7 +197,7 @@
             pointer-events: none;
         }
 
-        /* 英文翻牌動畫（保持 scaleX 0.9） */
+        /* Latin flip animation */
         .flap.flipping .flipper {
             animation: flip-down 0.13s cubic-bezier(0.4, 0.0, 1, 1) forwards;
         }
@@ -207,7 +207,7 @@
             100% { transform: perspective(500px) scaleX(0.9) rotateX(-90deg); }
         }
 
-        /* 中文翻牌：思源黑體，中文為寬度基準（scaleX 1.0，不壓縮） */
+        /* CJK flip: NotoSansTC, no horizontal compression */
         .flap.cjk .top,
         .flap.cjk .bottom,
         .flap.cjk .flipper {
@@ -265,43 +265,6 @@
             background: #ffcc00;
             width: 100%;
         }
-
-        /* ── Overlay (for ?refresh info) ─────────── */
-        #overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.75);
-            z-index: 100;
-            align-items: center;
-            justify-content: center;
-        }
-        #overlay.show { display: flex; }
-        #overlay-box {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 2em 2.5em;
-            max-width: 40vw;
-            color: #ccc;
-            font-size: 0.85vw;
-            line-height: 1.8;
-        }
-        #overlay-box h2 { color: #ffcc00; margin-bottom: 0.8em; font-size: 1vw; }
-        #overlay-box code { background: #111; padding: 0.1em 0.4em; border-radius: 3px; color: #7cf; }
-        #overlay-close {
-            margin-top: 1.2em;
-            display: inline-block;
-            padding: 0.4em 1.2em;
-            background: #333;
-            color: #ffcc00;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.8vw;
-        }
-        #overlay-close:hover { background: #444; }
     </style>
 </head>
 <body>
@@ -311,321 +274,88 @@
     <div id="logo-bar">
         <img src="CAL_logo.png" id="cal-logo" alt="China Airlines Logo">
         <div id="board-title-block">
-            <div id="board-title-zh">中華航空　航班資訊看板</div>
+            <div id="board-title-zh">&#20013;&#33775;&#33322;&#31354;&#12288;&#33322;&#29677;&#36039;&#35338;&#30475;&#26495;</div>
             <div id="board-title-en">CHINA AIRLINES  FLIGHT INFORMATION DISPLAY</div>
         </div>
         <div id="section-indicator">
-            <div id="datetime-display">—</div>
-            <div id="section-label">—</div>
-            <div id="update-label">載入中…</div>
+            <div id="datetime-display">&#8212;</div>
+            <div id="section-label">&#8212;</div>
+            <div id="update-label"></div>
         </div>
     </div>
 
     <div id="flight-board"></div>
 
     <div id="status-bar">
-        <div id="no-data-msg">尚無資料，請執行 npm run fetch 後部署</div>
-        <div id="page-indicator">— / —</div>
+        <div id="no-data-msg">&#23608;&#28961;&#36039;&#26009;</div>
+        <div id="page-indicator">&#8212; / &#8212;</div>
         <div id="countdown-bar"><div id="countdown-fill"></div></div>
     </div>
 
 </div>
 
-<!-- Refresh info overlay -->
-<div id="overlay">
-    <div id="overlay-box">
-        <h2>資料更新說明</h2>
-        <p>本看板每 30 分鐘自動從 API 取得最新航班資料。</p>
-        <br>
-        <p><strong>手動立即更新：</strong>在網址列加上 <code>?refresh</code></p>
-        <p>例如：<code>https://your-domain.web.app/?refresh</code></p>
-        <br>
-        <p><strong>部署靜態資料：</strong></p>
-        <p><code>npm run fetch</code> &nbsp;→&nbsp; <code>firebase deploy</code></p>
-        <br>
-        <p style="color:#555;font-size:0.75vw;">資料來源：交通部 TDX 平台 &nbsp;|&nbsp; 機場：TPE 桃園</p>
-        <button id="overlay-close" onclick="document.getElementById('overlay').classList.remove('show')">關閉</button>
-    </div>
-</div>
-
 <script>
 // ================================================================
-// ██████╗  ██████╗ ███╗   ██╗███████╗██╗ ██████╗
-// ██╔════╝██╔═══██╗████╗  ██║██╔════╝██║██╔════╝
-// ██║     ██║   ██║██╔██╗ ██║█████╗  ██║██║  ███╗
-// ██║     ██║   ██║██║╚██╗██║██╔══╝  ██║██║   ██║
-// ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝
-//  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝
-// ================================================================
-// 設定（TDX 憑證已移至 Firebase Cloud Function，前端不再存放）
+// &#35373;&#23450;
 // ================================================================
 const CONFIG = {
-    airport:       'TPE',
-    airline:       'CI',
-    intervalMs:    10000,   // 每頁顯示秒數（毫秒）
-    pageSize:      10,      // 每頁顯示航班數
-    refreshMs:     30 * 60 * 1000,  // 資料自動更新間隔（30 分鐘）
+    intervalMs: 10000,  // &#27599;&#39730;&#38996;&#31034;&#31186;&#25976;&#65288;&#27585;&#31186;&#65289;
+    pageSize:   10,     // &#27599;&#39730;&#38996;&#31034;&#33322;&#29677;&#25976;
 };
 
 // ================================================================
-// 機場代碼 → 顯示名稱（從 data/airports.json 載入）
+// &#29256;&#38754;&#37197;&#32622;
+// COL_LENGTHS: &#27599;&#27284;&#12300;&#23383;&#20lemen;&#25976;&#12301;&#65292;&#21516;&#26178;&#20063;&#26159; flex &#27604;&#20363;
+//   &#26178;&#38291;7&#12289;&#30446;&#30340;&#22320;14&#12289;&#33322;&#29677;8&#12289;&#33322;&#24220;4&#12289;&#30767;&#26426;&#38272;4&#12289;&#22577;&#21040;4&#12289;&#29366;&#24907;10
 // ================================================================
-let AIRPORT_NAMES = {};
-
-async function loadAirports() {
-    try {
-        const res = await fetch('data/airports.json');
-        if (res.ok) AIRPORT_NAMES = await res.json();
-    } catch(e) {
-        console.warn('Failed to load airports.json:', e);
-    }
-}
-
-function airportName(code, lang) {
-    if (!code) return '---';
-    const entry = AIRPORT_NAMES[code];
-    if (!entry) return code;
-    return lang === 'zh' ? entry.zh : entry.en;
-}
-
-// ================================================================
-// 版面配置
-// COL_LENGTHS: 每欄「字元數」，同時也是 flex 比例
-//   航廈 | 航班     | 目的地/來源地     | 時間   | 狀態
-// ================================================================
-const COL_LENGTHS = [7, 18, 8, 4, 4, 10]; // 時間7、目的地18、航班8、航廈4、登機門4、狀態10
+const COL_LENGTHS = [7, 14, 8, 4, 4, 4, 10];
 
 const PHASES = [
-    { type:'arrival',   lang:'zh', label:'入境　中文' },
-    { type:'arrival',   lang:'en', label:'ARRIVALS  ENG' },
-    { type:'departure', lang:'zh', label:'出境　中文' },
-    { type:'departure', lang:'en', label:'DEPARTURES  ENG' },
+    { lang: 'zh', label: '中文' },
+    { lang: 'en', label: 'ENG'  },
 ];
 
 const HEADERS = {
-    'arrival-zh':   ['時間','來源地','航班','航廈','登機門','狀態'],
-    'arrival-en':   ['TIME','FROM','FLIGHT','TERM','GATE','STATUS'],
-    'departure-zh': ['時間','目的地','航班','航廈','登機門','狀態'],
-    'departure-en': ['TIME','DEST','FLIGHT','TERM','GATE','STATUS'],
+    zh: ['時間', '目的地', '航班', '航廈', '登機門', '報到', '狀態'],
+    en: ['TIME', 'DESTINATION', 'FLIGHT', 'TM', 'GT', 'CK', 'STATUS'],
 };
 
 const RANDOM_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
 
-// 判斷是否為中文字元
+// &#21028;&#26377;&#26159;&#21542;&#28858;&#20013;&#25991;&#23383;&#20803;
 function isCJK(ch) {
-    return /[\u4e00-\u9fff\u3000-\u303f]/.test(ch);
-}
-
-
-// ================================================================
-// 資料過濾（出境：航班白名單；入境：目的地機場白名單）
-// ================================================================
-const ALLOWED_DEPARTURE_FLIGHTS = new Set([
-    'CI81','CI36','CI12','CI24','CI73','CI61','CI63','CI75',
-    'CI22','CI4','CI67','CI57','CI8','CI51','CI32','CI53'
-]);
-const TARGET_AIRPORTS = new Set([
-    'LHR','PHX','JFK','ONT','AMS','FRA','VIE','FCO',
-    'SEA','SFO','PRG','MEL','LAX','SYD','YVR','BNE','AKL'
-]);
-
-function filterFlights(flights, type) {
-    if (type === 'departure') {
-        return flights.filter(f => ALLOWED_DEPARTURE_FLIGHTS.has(f.flightNumber));
-    }
-    return flights.filter(f => TARGET_AIRPORTS.has(f.airportCode));
-}
-
-function mergeCi53(flights) {
-    const ci53 = flights.filter(f => f.flightNumber === 'CI53');
-    if (ci53.length <= 1) return flights;
-    const merged = {
-        ...ci53[0],
-        airportCode:   'BNE/AKL',
-        airportNameZh: '布里斯本/奧克蘭',
-        airportNameEn: 'Brisbane/Auckland',
-    };
-    return [...flights.filter(f => f.flightNumber !== 'CI53'), merged]
-        .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+    const c = ch.charCodeAt(0);
+    return (c >= 0x4e00 && c <= 0x9fff) || (c >= 0x3000 && c <= 0x30ff) || (c >= 0xff00 && c <= 0xffef);
 }
 
 // ================================================================
-// 狀態
+// &#29366;&#24907;
 // ================================================================
-let flightData  = { arrival: [], departure: [] };
-let flapElements = [];   // [rowIdx][colIdx][charIdx] = {container, top, bottom, flipper, current}
-let headerCells  = [];   // [colIdx] = header cell DOM element
-let phaseIdx    = 0;
-let pageIdx     = 0;
-let rotationTimer   = null;
-let countdownTimer  = null;
-let updatedAt   = null;
+let flightData   = { zh: [], en: [] };
+let flapElements = [];  // [rowIdx][colIdx] = [{container, top, bottom, flipper, current}, ...]
+let headerCells  = [];  // [colIdx] = header cell DOM element
+let phaseIdx     = 0;
+let pageIdx      = 0;
+let rotationTimer = null;
 
 // ================================================================
-// 資料載入
+// &#36039;&#26009;&#36617;&#20837;&#65288;&#32113;&#38靜;&#24907; JSON&#65292;&#28961;&#22806;&#37096; API&#65289;
 // ================================================================
-// getTDXToken 已移除；憑證改存於 Firebase Cloud Function（/api/flights）
-
-function formatTime(iso) {
-    if (!iso) return '--:--';
-    // "2024-01-01T23:55:00+08:00" → "23:55"
-    const m = iso.match(/T(\d{2}:\d{2})/);
-    return m ? m[1] : '--:--';
-}
-
-// TDX 狀態欄位有時將中英文合併（如「已到ARRIVED」「準時ON TIME」），拆開處理
-function parseStatus(raw, rawEn) {
-    const str = raw || '';
-    const strEn = rawEn || '';
-    if (strEn) return { zh: str, en: strEn };
-    const zh = (str.match(/[\u4e00-\u9fff]+/g) || []).join('');
-    const en = (str.match(/[A-Z][A-Z ]+/g) || []).map(s => s.trim()).join(' ');
-    return { zh: zh || str, en: en || str };
-}
-
-function normalizeFlight(raw, type) {
-    const isArr = (type === 'arrival');
-    const airportCode = isArr ? raw.DepartureAirportID : raw.ArrivalAirportID;
-    const time = isArr ? formatTime(raw.ScheduleArrivalTime) : formatTime(raw.ScheduleDepartureTime);
-
-    return {
-        terminal:      raw.Terminal || '--',
-        flightNumber:  `${raw.AirlineID}${raw.FlightNumber}`,
-        airportCode:   airportCode,
-        airportNameZh: airportName(airportCode, 'zh'),
-        airportNameEn: airportName(airportCode, 'en'),
-        scheduledTime: time,
-        ...(() => {
-            const s = parseStatus(
-                raw.ArrivalRemark   || raw.DepartureRemark   || '',
-                raw.ArrivalRemarkEn || raw.DepartureRemarkEn || ''
-            );
-            return { statusZh: s.zh, statusEn: s.en };
-        })(),
-    };
-}
-
-// ================================================================
-// 去重：同航班號 + 時刻 + 機場代碼 視為同一筆
-// 若狀態不同，保留「非空白且非準時/ON TIME」的那筆（較新狀態）
-// ================================================================
-function deduplicateFlights(flights) {
-    const seen = new Map();
-    for (const f of flights) {
-        const key = `${f.flightNumber}|${f.scheduledTime}|${f.airportCode}`;
-        if (!seen.has(key)) {
-            seen.set(key, f);
-        } else {
-            // 若現有的是「準時/ON TIME/空白」，新的有更具體狀態則替換
-            const existing = seen.get(key);
-            const bland = /^(準時|ON TIME|)$/i;
-            if (bland.test(existing.statusZh) && !bland.test(f.statusZh)) {
-                seen.set(key, f);
-            }
-        }
-    }
-    return Array.from(seen.values());
-}
-
-// 呼叫 Firebase Cloud Function（憑證安全存於後端）
-async function fetchFromAPI() {
-    const [arrRes, depRes] = await Promise.all([
-        fetch('/api/flights?type=arrival'),
-        fetch('/api/flights?type=departure'),
-    ]);
-
-    if (!arrRes.ok) throw new Error(`API arrival ${arrRes.status}`);
-    if (!depRes.ok) throw new Error(`API departure ${depRes.status}`);
-
-    const arrData = await arrRes.json();
-    const depData = await depRes.json();
-
-    flightData.arrival   = mergeCi53(filterFlights(deduplicateFlights(arrData.flights || []), 'arrival'));
-    flightData.departure = mergeCi53(filterFlights(deduplicateFlights(depData.flights || []), 'departure'));
-    updatedAt = arrData.updatedAt || new Date().toISOString();
-
-    // 更新 localStorage cache
-    localStorage.setItem('cal_board_cache', JSON.stringify({
-        updatedAt,
-        arrival:   flightData.arrival,
-        departure: flightData.departure,
-    }));
-}
-
-async function loadFromStaticFiles() {
-    const [arrRes, depRes] = await Promise.all([
-        fetch('data/arrival.json'),
-        fetch('data/departure.json'),
-    ]);
-
-    if (arrRes.ok) {
-        const d = await arrRes.json();
-        flightData.arrival = mergeCi53(filterFlights(deduplicateFlights(d.flights || []), 'arrival'));
-        updatedAt = d.updatedAt || updatedAt;
-    }
-    if (depRes.ok) {
-        const d = await depRes.json();
-        flightData.departure = mergeCi53(filterFlights(deduplicateFlights(d.flights || []), 'departure'));
-        if (!updatedAt) updatedAt = d.updatedAt;
-    }
-}
-
-function loadFromLocalStorage() {
-    try {
-        const raw = localStorage.getItem('cal_board_cache');
-        if (!raw) return false;
-        const cache = JSON.parse(raw);
-        if (!cache.updatedAt) return false;
-        const age = Date.now() - new Date(cache.updatedAt).getTime();
-        if (age > 24 * 60 * 60 * 1000) return false; // expired after 24h
-        flightData.arrival   = mergeCi53(filterFlights(cache.arrival   || [], 'arrival'));
-        flightData.departure = mergeCi53(filterFlights(cache.departure || [], 'departure'));
-        updatedAt = cache.updatedAt;
-        return true;
-    } catch { return false; }
-}
-
 async function loadData() {
-    const params = new URLSearchParams(window.location.search);
-
-    if (params.has('forcereflash')) {
-        // 強制重新呼叫 TDX API，繞過所有快取，靜默無 overlay
-        const label = document.getElementById('update-label');
-        label.textContent = '強制更新中…';
-        try {
-            await fetchFromAPI();
-            label.textContent = '✓ 已強制更新';
-            setTimeout(() => updateTimeLabel(), 3000);
-        } catch (e) {
-            console.warn('Force refresh failed:', e.message);
-            label.textContent = '強制更新失敗';
-        }
-        // 移除網址參數，避免重整時重複觸發
-        history.replaceState(null, '', window.location.pathname);
-        return;
+    try {
+        const [zhRes, enRes] = await Promise.all([
+            fetch('data/flights-zh.json'),
+            fetch('data/flights-en.json'),
+        ]);
+        if (zhRes.ok) flightData.zh = await zhRes.json();
+        if (enRes.ok) flightData.en = await enRes.json();
+    } catch(e) {
+        console.warn('Failed to load flight data:', e);
     }
-
-    if (params.has('refresh')) {
-        // Show info overlay, then try live API
-        document.getElementById('overlay').classList.add('show');
-        try {
-            await fetchFromAPI();
-            document.getElementById('update-label').textContent = '已即時更新';
-        } catch (e) {
-            console.warn('Live API fetch failed:', e.message);
-        }
-        return;
-    }
-
-    // 1. Try localStorage cache (< 24h)
-    if (loadFromLocalStorage()) return;
-
-    // 2. Fall back to static pre-fetched files
-    await loadFromStaticFiles();
 }
 
 // ================================================================
-// 即時時鐘
+// &#21592;&#26178;&#26178;&#37912;
 // ================================================================
 function updateClock() {
     const now  = new Date();
@@ -635,19 +365,8 @@ function updateClock() {
     document.getElementById('datetime-display').textContent = str;
 }
 
-function updateTimeLabel() {
-    const el = document.getElementById('update-label');
-    if (!updatedAt) { el.textContent = '無資料'; return; }
-    const d = new Date(updatedAt);
-    const str = d.toLocaleString('zh-TW', {
-        month: 'numeric', day: 'numeric',
-        hour: '2-digit', minute: '2-digit', hour12: false,
-    });
-    el.textContent = `更新：${str}`;
-}
-
 // ================================================================
-// 看板初始化
+// &#30475;&#26495;&#21021;&#22987;&#21270;
 // ================================================================
 function initBoard() {
     const board = document.getElementById('flight-board');
@@ -661,7 +380,7 @@ function initBoard() {
         rowDiv.className = 'row' + (rowIdx === 0 ? ' header-row' : '');
 
         if (rowIdx === 0) {
-            // 標題列：每欄一個整塊 header-cell，不使用翻牌格
+            // &#26657;&#39064;&#21015;&#65306;&#27599;&#27284;&#19968;&#20491;&#25972;&#22359; header-cell&#65292;&#19981;&#20351;&#29992;&#32610;&#29262;&#26684;
             headerCells = [];
             COL_LENGTHS.forEach(colLen => {
                 const colDiv = document.createElement('div');
@@ -674,7 +393,7 @@ function initBoard() {
                 headerCells.push(cell);
             });
             board.appendChild(rowDiv);
-            flapElements.push([]); // 佔位，保持 rowIdx 對齊
+            flapElements.push([]); // &#20491;&#20301;&#65292;&#20445;&#25345; rowIdx &#23565;&#40643;
             continue;
         }
 
@@ -706,38 +425,26 @@ function initBoard() {
 }
 
 // ================================================================
-// 顯示邏輯
+// &#39611;&#31034;&#36448;&#36755;
 // ================================================================
-function getRowData(flight, type, lang) {
-    // 目的地：若靜態資料未解析（存了原始代號），即時 fallback 查 AIRPORT_NAMES
-    const code = flight.airportCode || '';
-    const destZh = (flight.airportNameZh && flight.airportNameZh !== code)
-        ? flight.airportNameZh : airportName(code, 'zh');
-    const destEn = (flight.airportNameEn && flight.airportNameEn !== code)
-        ? flight.airportNameEn : airportName(code, 'en');
+function getRowData(flight) {
+    // &#33322;&#29677;&#65306;&#39318;&#23614;&#30041;&#31354; " CI81   "&#65288;8 bits&#65289;
+    const fnDisplay = (' ' + flight.flight).padEnd(7, ' ') + ' ';
 
-    // 航班：首尾留空 → " CI81   "（8 bits）
-    const fnDisplay = (' ' + flight.flightNumber).padEnd(7, ' ') + ' ';
+    // &#33322;&#24220;&#65306;&#39318;&#23614;&#30041;&#31354; " T1 "&#65288;4 bits&#65289;
+    const termDisplay = ' ' + String(flight.terminal).slice(0, 2) + ' ';
 
-    // 航廈：首尾留空 → " T1 "（4 bits）
-    const term = (flight.terminal || '-').toString().trim();
-    const termDisplay = ' T' + term.slice(0, 1) + ' ';
+    // &#30767;&#26426;&#38272;&#65306;&#39318;&#23614;&#30041;&#31354; " A7 "&#65288;4 bits&#65289;
+    const gateDisplay = ' ' + String(flight.gate).slice(0, 2) + ' ';
 
-    // 登機門：首尾留空 → " A7 "（4 bits）
-    const rawGate = (flight.gate || '--').trim();
-    const gateDisplay = ' ' + rawGate.slice(0, 2) + ' ';
+    // &#22577;&#21040;&#31281;&#27171;&#65306;&#39318;&#23614;&#30041;&#31354; " 11 "&#65288;4 bits&#65289;
+    const ctr = String(flight.counter);
+    const counterDisplay = ' ' + (ctr.length >= 2 ? ctr.slice(0, 2) : ' ' + ctr) + ' ';
 
-    // 時間：首尾留空 → " 23:55 "（7 bits）
-    const timeDisplay = ' ' + flight.scheduledTime + ' ';
+    // &#26178;&#38291;&#65306;&#39318;&#23614;&#30041;&#31354; " 08:40 "&#65288;7 bits&#65289;
+    const timeDisplay = ' ' + flight.time + ' ';
 
-    return [
-        timeDisplay,
-        lang === 'zh' ? destZh : destEn,
-        fnDisplay,
-        termDisplay,
-        gateDisplay,
-        lang === 'zh' ? (flight.statusZh || '') : (flight.statusEn || ''),
-    ];
+    return [timeDisplay, flight.destination, fnDisplay, termDisplay, gateDisplay, counterDisplay, flight.status];
 }
 
 function updateRow(rowIdx, colData) {
@@ -750,17 +457,8 @@ function updateRow(rowIdx, colData) {
             const flapObj    = flaps[i];
             if (flapObj.current === targetChar) continue;
 
-            if (rowIdx === 0) {
-                // 標題列直接寫死，不翻牌
-                flapObj.top.textContent     = targetChar;
-                flapObj.bottom.textContent  = targetChar;
-                flapObj.flipper.textContent = targetChar;
-                flapObj.current             = targetChar;
-                flapObj.container.classList.toggle('cjk', isCJK(targetChar));
-            } else {
-                const delay = Math.random() * 760;
-                setTimeout(() => triggerFlip(flapObj, targetChar), delay);
-            }
+            const delay = Math.random() * 760;
+            setTimeout(() => triggerFlip(flapObj, targetChar), delay);
         }
     });
 }
@@ -792,10 +490,9 @@ function triggerFlip(flapObj, targetChar) {
 }
 
 function displayCurrentPage() {
-    const phase    = PHASES[phaseIdx];
-    const flights  = flightData[phase.type];
+    const phase   = PHASES[phaseIdx];
+    const flights = flightData[phase.lang];
     const totalPages = Math.max(1, Math.ceil(flights.length / CONFIG.pageSize));
-    const phaseKey = `${phase.type}-${phase.lang}`;
 
     // Section label (fade)
     const labelEl = document.getElementById('section-label');
@@ -803,38 +500,37 @@ function displayCurrentPage() {
     setTimeout(() => { labelEl.textContent = phase.label; labelEl.style.opacity = '1'; }, 200);
 
     // Page indicator
-    document.getElementById('page-indicator').textContent =
-        `${pageIdx + 1} / ${totalPages}`;
+    document.getElementById('page-indicator').textContent = `${pageIdx + 1} / ${totalPages}`;
 
     // No-data warning
-    const noData = flightData.arrival.length === 0 && flightData.departure.length === 0;
+    const noData = flightData.zh.length === 0 && flightData.en.length === 0;
     document.getElementById('no-data-msg').style.display = noData ? 'block' : 'none';
 
-    // Header row (row 0)：直接寫入，不翻牌
-    HEADERS[phaseKey].forEach((text, i) => { headerCells[i].textContent = text; });
+    // Header row
+    HEADERS[phase.lang].forEach((text, i) => { headerCells[i].textContent = text; });
 
     // Data rows
     const pageFlights = flights.slice(pageIdx * CONFIG.pageSize, (pageIdx + 1) * CONFIG.pageSize);
     for (let i = 0; i < CONFIG.pageSize; i++) {
         if (i < pageFlights.length) {
-            updateRow(i + 1, getRowData(pageFlights[i], phase.type, phase.lang));
+            updateRow(i + 1, getRowData(pageFlights[i]));
         } else {
-            updateRow(i + 1, ['', '', '', '', '']);
+            updateRow(i + 1, ['', '', '', '', '', '', '']);
         }
     }
 }
 
 // ================================================================
-// 輪播控制
+// &#36655;&#25773;&#25511;&#21046;
 // ================================================================
 function advance() {
     const phase = PHASES[phaseIdx];
-    const totalPages = Math.max(1, Math.ceil(flightData[phase.type].length / CONFIG.pageSize));
+    const totalPages = Math.max(1, Math.ceil(flightData[phase.lang].length / CONFIG.pageSize));
 
     pageIdx++;
     if (pageIdx >= totalPages) {
-        pageIdx   = 0;
-        phaseIdx  = (phaseIdx + 1) % PHASES.length;
+        pageIdx  = 0;
+        phaseIdx = (phaseIdx + 1) % PHASES.length;
     }
 
     displayCurrentPage();
@@ -843,11 +539,9 @@ function advance() {
 
 function startCountdown() {
     const fill = document.getElementById('countdown-fill');
-    // Reset
     fill.style.transition = 'none';
     fill.style.width      = '100%';
     void fill.offsetWidth;
-    // Animate
     fill.style.transition = `width ${CONFIG.intervalMs}ms linear`;
     fill.style.width      = '0%';
 }
@@ -860,27 +554,13 @@ function startRotation() {
 }
 
 // ================================================================
-// 啟動
+// &#21555;&#21205;
 // ================================================================
 window.addEventListener('load', async () => {
-    await loadAirports();
     initBoard();
     await loadData();
-    updateTimeLabel();
     updateClock();
     setInterval(updateClock, 1000);
-
-    // 每 30 分鐘自動從 API 拉取最新航班資料
-    setInterval(async () => {
-        try {
-            await fetchFromAPI();
-            updateTimeLabel();
-            displayCurrentPage();
-        } catch(e) {
-            console.warn('Auto-refresh failed:', e.message);
-        }
-    }, CONFIG.refreshMs);
-
     startRotation();
 });
 </script>
