@@ -46,7 +46,9 @@
             align-items: center;
             gap: 1.2vw;
             padding: 0 0.4vw 0.5vh;
-            border-bottom: 1px solid #2e2e2e;
+            background-color: #003087;
+            border-bottom: 1px solid #00205b;
+            border-radius: 4px;
         }
 
         #cal-logo {
@@ -62,7 +64,7 @@
         }
 
         #board-title-zh {
-            color: #ffcc00;
+            color: #ffffff;
             font-size: 1.8vw;
             font-weight: bold;
             letter-spacing: 0.25em;
@@ -84,7 +86,7 @@
         }
 
         #datetime-display {
-            color: #ffcc00;
+            color: #ffffff;
             font-size: 1.05vw;
             font-family: 'Courier New', monospace;
             letter-spacing: 0.08em;
@@ -92,7 +94,7 @@
         }
 
         #update-label {
-            color: #444;
+            color: rgba(255,255,255,0.5);
             font-size: 0.6vw;
             letter-spacing: 0.05em;
         }
@@ -295,8 +297,7 @@
             <div id="board-title-en">China Airlines Flight Information for Global Tech Hub Cities</div>
         </div>
         <div id="section-indicator">
-            <div id="datetime-display">&#8212;</div>
-            <div id="update-label"></div>
+            <div id="datetime-display"><img src="departure_icon.png" style="height:2.5vh;vertical-align:middle;margin-right:0.5em;"> DEPARTURE</div>
         </div>
     </div>
 
@@ -307,8 +308,8 @@
     <div id="flight-board"></div>
 
     <div id="status-bar">
-        <div id="no-data-msg">&#23608;&#28961;&#36039;&#26009;</div>
-        <div id="page-indicator">&#8212; / &#8212;</div>
+        <div id="no-data-msg">尸無資料</div>
+        <div id="page-indicator">— / —</div>
         <div id="countdown-bar"><div id="countdown-fill"></div></div>
     </div>
 
@@ -316,19 +317,19 @@
 
 <script>
 // ================================================================
-// &#35373;&#23450;
+// 設定
 // ================================================================
 const CONFIG = {
-    intervalMs: 10000,  // &#27599;&#39730;&#38996;&#31034;&#31186;&#25976;&#65288;&#27585;&#31186;&#65289;
-    pageSize:   10,     // &#27599;&#39730;&#38996;&#31034;&#33322;&#29677;&#25976;
+    intervalMs: 10000,  // 每鬲顔示秒數（毁秒）
+    pageSize:   10,     // 每鬲顔示航班數
 };
 
 // ================================================================
-// &#29256;&#38754;&#37197;&#32622;
-// COL_LENGTHS: &#27599;&#27284;&#12300;&#23383;&#20lemen;&#25976;&#12301;&#65292;&#21516;&#26178;&#20063;&#26159; flex &#27604;&#20363;
-//   &#26178;&#38291;7&#12289;&#30446;&#30340;&#22320;14&#12289;&#33322;&#29677;8&#12289;&#33322;&#24220;4&#12289;&#30767;&#26426;&#38272;4&#12289;&#22577;&#21040;4&#12289;&#29366;&#24907;10
+// 版面配置
+// COL_LENGTHS: 每檔「字lemen;數」，同時也是 flex 比例
+//   時間7、目的地14、航班8、航府4、砯机門4、報到4、状態10
 // ================================================================
-const COL_LENGTHS = [7, 14, 8, 4, 4, 4, 10];
+const COL_LENGTHS = [7, 19, 8, 4, 4, 4, 10];
 
 const PHASES = [
     { lang: 'zh', label: '中文' },
@@ -342,14 +343,14 @@ const HEADERS = {
 
 const RANDOM_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
 
-// &#21028;&#26377;&#26159;&#21542;&#28858;&#20013;&#25991;&#23383;&#20803;
+// 判有是否為中文字元
 function isCJK(ch) {
     const c = ch.charCodeAt(0);
     return (c >= 0x4e00 && c <= 0x9fff) || (c >= 0x3000 && c <= 0x30ff) || (c >= 0xff00 && c <= 0xffef);
 }
 
 // ================================================================
-// &#29366;&#24907;
+// 状態
 // ================================================================
 let flightData   = { zh: [], en: [] };
 let promoMessages = [];
@@ -361,7 +362,7 @@ let pageIdx      = 0;
 let rotationTimer = null;
 
 // ================================================================
-// &#36039;&#26009;&#36617;&#20837;&#65288;&#32113;&#38靜;&#24907; JSON&#65292;&#28961;&#22806;&#37096; API&#65289;
+// 資料載入（統&靜;態 JSON，無外部 API）
 // ================================================================
 async function loadData() {
     try {
@@ -397,18 +398,12 @@ function updatePromo() {
 }
 
 // ================================================================
-// &#21592;&#26178;&#26178;&#37912;
+// 员時時鐘
 // ================================================================
-function updateClock() {
-    const now  = new Date();
-    const DAYS = ['日','一','二','三','四','五','六'];
-    const pad  = n => String(n).padStart(2, '0');
-    const str  = `${now.getFullYear()} · ${pad(now.getMonth()+1)} · ${pad(now.getDate())}  星期${DAYS[now.getDay()]}  ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-    document.getElementById('datetime-display').textContent = str;
-}
+
 
 // ================================================================
-// &#30475;&#26495;&#21021;&#22987;&#21270;
+// 看板初始化
 // ================================================================
 function initBoard() {
     const board = document.getElementById('flight-board');
@@ -422,7 +417,7 @@ function initBoard() {
         rowDiv.className = 'row' + (rowIdx === 0 ? ' header-row' : '');
 
         if (rowIdx === 0) {
-            // &#26657;&#39064;&#21015;&#65306;&#27599;&#27284;&#19968;&#20491;&#25972;&#22359; header-cell&#65292;&#19981;&#20351;&#29992;&#32610;&#29262;&#26684;
+            // 校题列：每檔一個整块 header-cell，不使用罢牎格
             headerCells = [];
             COL_LENGTHS.forEach(colLen => {
                 const colDiv = document.createElement('div');
@@ -435,7 +430,7 @@ function initBoard() {
                 headerCells.push(cell);
             });
             board.appendChild(rowDiv);
-            flapElements.push([]); // &#20491;&#20301;&#65292;&#20445;&#25345; rowIdx &#23565;&#40643;
+            flapElements.push([]); // 個位，保持 rowIdx 對黃
             continue;
         }
 
@@ -467,23 +462,23 @@ function initBoard() {
 }
 
 // ================================================================
-// &#39611;&#31034;&#36448;&#36755;
+// 骻示蹠输
 // ================================================================
 function getRowData(flight) {
-    // &#33322;&#29677;&#65306;&#39318;&#23614;&#30041;&#31354; " CI81   "&#65288;8 bits&#65289;
+    // 航班：首尾留空 " CI81   "（8 bits）
     const fnDisplay = (' ' + flight.flight).padEnd(7, ' ') + ' ';
 
-    // &#33322;&#24220;&#65306;&#39318;&#23614;&#30041;&#31354; " T1 "&#65288;4 bits&#65289;
+    // 航府：首尾留空 " T1 "（4 bits）
     const termDisplay = ' ' + String(flight.terminal).slice(0, 2) + ' ';
 
-    // &#30767;&#26426;&#38272;&#65306;&#39318;&#23614;&#30041;&#31354; " A7 "&#65288;4 bits&#65289;
+    // 砯机門：首尾留空 " A7 "（4 bits）
     const gateDisplay = ' ' + String(flight.gate).slice(0, 2) + ' ';
 
-    // &#22577;&#21040;&#31281;&#27171;&#65306;&#39318;&#23614;&#30041;&#31354; " 11 "&#65288;4 bits&#65289;
+    // 報到稱樣：首尾留空 " 11 "（4 bits）
     const ctr = String(flight.counter);
     const counterDisplay = ' ' + (ctr.length >= 2 ? ctr.slice(0, 2) : ' ' + ctr) + ' ';
 
-    // &#26178;&#38291;&#65306;&#39318;&#23614;&#30041;&#31354; " 08:40 "&#65288;7 bits&#65289;
+    // 時間：首尾留空 " 08:40 "（7 bits）
     const timeDisplay = ' ' + flight.time + ' ';
 
     return [timeDisplay, flight.destination, fnDisplay, termDisplay, gateDisplay, counterDisplay, flight.status];
@@ -558,7 +553,7 @@ function displayCurrentPage() {
 }
 
 // ================================================================
-// &#36655;&#25773;&#25511;&#21046;
+// 輯播控制
 // ================================================================
 function advance() {
     const phase = PHASES[phaseIdx];
@@ -592,13 +587,11 @@ function startRotation() {
 }
 
 // ================================================================
-// &#21555;&#21205;
+// 吳動
 // ================================================================
 window.addEventListener('load', async () => {
     initBoard();
     await Promise.all([loadData(), loadPromo()]);
-    updateClock();
-    setInterval(updateClock, 1000);
     updatePromo();
     startRotation();
 });
