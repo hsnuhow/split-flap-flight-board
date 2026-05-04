@@ -25,9 +25,18 @@
             justify-content: center;
         }
 
-        #board-container {
+        #main-wrapper {
             width: 90vw;
-            height: 86vh;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8vh;
+            height: 92vh;
+        }
+
+        #board-container {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
             background-color: #1a1a1a;
             border-radius: 8px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.05);
@@ -45,15 +54,17 @@
             display: flex;
             align-items: center;
             gap: 1.2vw;
-            padding: 0 0.4vw 0.5vh;
+            padding: 0 1.2vw;
             background-color: #003087;
-            border-bottom: 1px solid #00205b;
-            border-radius: 4px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
         }
 
         #cal-logo {
             height: 10vh;
             object-fit: contain;
+            transform: scaleX(0.8);
+            transform-origin: left center;
         }
 
         #board-title-block {
@@ -87,10 +98,13 @@
 
         #datetime-display {
             color: #ffffff;
-            font-size: 1.05vw;
+            font-size: 1.4vw;
             font-family: 'Courier New', monospace;
             letter-spacing: 0.08em;
             font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.4em;
         }
 
         #update-label {
@@ -288,18 +302,20 @@
 </head>
 <body>
 
-<div id="board-container">
+<div id="main-wrapper">
 
-    <div id="logo-bar">
+<div id="logo-bar">
         <img src="CAL_logo.png" id="cal-logo" alt="China Airlines Logo">
         <div id="board-title-block">
             <div id="board-title-zh">中華航空 全球科技樞紐 航班資訊</div>
             <div id="board-title-en">China Airlines Flight Information for Global Tech Hub Cities</div>
         </div>
         <div id="section-indicator">
-            <div id="datetime-display"><img src="departure_icon.png" style="height:2.5vh;vertical-align:middle;margin-right:0.5em;"> DEPARTURE</div>
+            <div id="datetime-display"><img src="departure_icon.png" style="height:1.4vw;"> DEPARTURE</div>
         </div>
-    </div>
+</div>
+
+<div id="board-container">
 
     <div id="promo-bar">
         <div id="promo-text"></div>
@@ -308,10 +324,12 @@
     <div id="flight-board"></div>
 
     <div id="status-bar">
-        <div id="no-data-msg">尸無資料</div>
+        <div id="no-data-msg">暫無資料</div>
         <div id="page-indicator">— / —</div>
         <div id="countdown-bar"><div id="countdown-fill"></div></div>
     </div>
+
+</div>
 
 </div>
 
@@ -481,7 +499,9 @@ function getRowData(flight) {
     // 時間：首尾留空 " 08:40 "（7 bits）
     const timeDisplay = ' ' + flight.time + ' ';
 
-    return [timeDisplay, flight.destination, fnDisplay, termDisplay, gateDisplay, counterDisplay, flight.status];
+    const destDisplay = ' ' + flight.destination + ' ';
+    const statusDisplay = ' ' + flight.status + ' ';
+    return [timeDisplay, destDisplay, fnDisplay, termDisplay, gateDisplay, counterDisplay, statusDisplay];
 }
 
 function updateRow(rowIdx, colData) {
