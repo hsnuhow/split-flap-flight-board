@@ -351,8 +351,8 @@ const CONFIG = {
 
 // ================================================================
 // 版面配置
-// COL_LENGTHS: 每檔「字元數」，同時也是 flex 比例
-//   時間7、目的地14、航班8、航廈4、登機門4、報到4、狀態10
+// COL_LENGTHS: 每欄「字元數」，同時也是 flex 比例
+//   時間7、目的地19、航班8、航廈4、登機門4、報到4、狀態10
 // ================================================================
 const COL_LENGTHS = [7, 19, 8, 4, 4, 4, 10];
 
@@ -368,14 +368,14 @@ const HEADERS = {
 
 const RANDOM_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
 
-// 判有是否為中文字元
+// 判斷是否為 CJK 字元
 function isCJK(ch) {
     const c = ch.charCodeAt(0);
     return (c >= 0x4e00 && c <= 0x9fff) || (c >= 0x3000 && c <= 0x30ff) || (c >= 0xff00 && c <= 0xffef);
 }
 
 // ================================================================
-// 状態
+// 狀態
 // ================================================================
 let flightData   = { zh: [], en: [] };
 let promoMessages = [];
@@ -387,7 +387,7 @@ let pageIdx      = 0;
 let rotationTimer = null;
 
 // ================================================================
-// 資料載入（統&靜;態 JSON，無外部 API）
+// 資料載入（靜態 JSON，無外部 API）
 // ================================================================
 async function loadData() {
     try {
@@ -423,11 +423,6 @@ function updatePromo() {
 }
 
 // ================================================================
-// 员時時鐘
-// ================================================================
-
-
-// ================================================================
 // 看板初始化
 // ================================================================
 function initBoard() {
@@ -442,7 +437,7 @@ function initBoard() {
         rowDiv.className = 'row' + (rowIdx === 0 ? ' header-row' : '');
 
         if (rowIdx === 0) {
-            // 校题列：每檔一個整块 header-cell，不使用罢牎格
+            // 標題列：每欄一個整塊 header-cell，不使用翻牌格
             headerCells = [];
             COL_LENGTHS.forEach(colLen => {
                 const colDiv = document.createElement('div');
@@ -455,7 +450,7 @@ function initBoard() {
                 headerCells.push(cell);
             });
             board.appendChild(rowDiv);
-            flapElements.push([]); // 個位，保持 rowIdx 對黃
+            flapElements.push([]); // 佔位，保持 rowIdx 索引對齊
             continue;
         }
 
@@ -487,23 +482,23 @@ function initBoard() {
 }
 
 // ================================================================
-// 骻示蹠输
+// 顯示輸出
 // ================================================================
 function getRowData(flight) {
-    // 航班：首尾留空 " CI81   "（8 bits）
+    // 航班：首尾留空 " CI81   "（8 格）
     const fnDisplay = (' ' + flight.flight).padEnd(7, ' ') + ' ';
 
-    // 航府：首尾留空 " T1 "（4 bits）
+    // 航廈：首尾留空 " T1 "（4 格）
     const termDisplay = ' ' + String(flight.terminal).slice(0, 2) + ' ';
 
-    // 砯机門：首尾留空 " A7 "（4 bits）
+    // 登機門：首尾留空 " A7 "（4 格）
     const gateDisplay = ' ' + String(flight.gate).slice(0, 2) + ' ';
 
-    // 報到稱樣：首尾留空 " 11 "（4 bits）
+    // 報到：首尾留空 " 11 "（4 格）
     const ctr = String(flight.counter);
     const counterDisplay = ' ' + (ctr.length >= 2 ? ctr.slice(0, 2) : ' ' + ctr) + ' ';
 
-    // 時間：首尾留空 " 08:40 "（7 bits）
+    // 時間：首尾留空 " 08:40 "（7 格）
     const timeDisplay = ' ' + flight.time + ' ';
 
     const destDisplay = ' ' + flight.destination + ' ';
@@ -580,7 +575,7 @@ function displayCurrentPage() {
 }
 
 // ================================================================
-// 輯播控制
+// 輪播控制
 // ================================================================
 function advance() {
     const phase = PHASES[phaseIdx];
@@ -614,7 +609,7 @@ function startRotation() {
 }
 
 // ================================================================
-// 吳動
+// 啟動
 // ================================================================
 window.addEventListener('load', async () => {
     initBoard();
