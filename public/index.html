@@ -14,13 +14,27 @@
             font-display: block;
         }
 
+        @font-face {
+            font-family: 'Roboto';
+            src: url('fonts/Roboto-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-display: block;
+        }
+
+        @font-face {
+            font-family: 'Roboto';
+            src: url('fonts/Roboto-Black.ttf') format('truetype');
+            font-weight: 900;
+            font-display: block;
+        }
+
         body {
             /*background-color: #003087; */
             background-color: #23569d;
             width: 100vw;
             height: 100vh;
             overflow: hidden;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Roboto', 'Microsoft JhengHei', '微軟正黑體', 'NotoSansTC', sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -106,9 +120,9 @@
         #datetime-display {
             color: #ffffff;
             font-size: 1.6vw;
-            font-family: 'Courier New', monospace;
+            font-family: 'Roboto', sans-serif;
             letter-spacing: 0.08em;
-            font-weight: bold;
+            font-weight: 900;
             display: flex;
             align-items: center;
             gap: 0.4em;
@@ -168,6 +182,7 @@
             align-items: center;
             justify-content: center;
             color: #ffcc00;
+            font-family: 'Courier New', Courier, monospace;
             font-size: 1.2vw;
             font-weight: bold;
             background-color: #252525;
@@ -204,6 +219,7 @@
             justify-content: center;
             align-items: center;
             color: #e8e8e8;
+            font-family: 'Courier New', Courier, monospace;
             font-size: 1.5vw;
             font-weight: bold;
             background-color: #111;
