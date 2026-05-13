@@ -7,3 +7,5 @@ node_modules/
 public/fonts/static/
 functions/
 push-deploy.sh
+
+.claude/worktrees/
