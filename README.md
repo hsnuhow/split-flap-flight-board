@@ -5,26 +5,15 @@
 
 **路徑 B（單軌）** — 唯一環境 `split-flap-flight-board`
 
-### ⚠️ 本專案沒有部署口令制度，且現行機制與口令閘互斥
+### 🟢 本專案刻意不採用部署口令制度（2026-09-02 決定）
 
-| 事實 | 說明 |
-|---|---|
-| `CLAUDE.md` 全檔 351 行 | **沒有任何 `核准部署` 口令**，唯一閘門是 `執行開發` |
-| `push-deploy.sh` | 一次執行 `git add -A` → `commit` → `push origin main` → `firebase deploy --only hosting` |
-| 結果 | **一次 push 就直接上 live，preview 沒有存在空間** |
-| CLAUDE.md 提到的 `.github/workflows/` | 目錄不存在（workflows 已於 commit `a4a4445` 移除） |
-| CLAUDE.md 提到的 `functions/` | 目錄不存在 |
+純前端小專案：只有 Firebase Hosting，沒有 Cloud Run、沒有後端、沒有資料儲存、沒有帳號。
 
-### 需要你決定
+部署方式：`./push-deploy.sh`，一次完成 `git add -A` → `commit` → `push origin main`
+→ `firebase deploy --only hosting`。
 
-1. **維持現狀**：接受 `push-deploy.sh` 的一鍵部署，並在 `CLAUDE.md` 明寫
-   「本專案刻意不採用部署口令制度」，讓它成為有意識的例外而非疏漏。
-2. **導入口令閘**：拆開 `push-deploy.sh`，讓 commit／push／deploy 分離，
-   並在 `CLAUDE.md` 定義口令。
-
-**本表不發明新口令。** 在你決定之前，本專案的部署授權機制是未定義狀態。
-
-跨專案的共同流程見 OpDev/standards/DEPLOYMENT.md 第二節。<!-- docs-sync: ignore-refs -->
+這是**宣告過的例外**，不是疏漏。理由與失效條件見 `CLAUDE.md` 最前面。
+稽核（`/devops-audit`）看到這個宣告會判為通過。
 
 ## 現場展示設定——全螢幕 Kiosk 模式
 

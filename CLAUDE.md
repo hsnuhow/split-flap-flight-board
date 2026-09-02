@@ -34,7 +34,28 @@
 
 收到部署口令後，**第一步必須讀本專案的部署文件**，再逐步執行，不得憑記憶。
 
-> ⚠️ **本專案待處理**：本專案先前**沒有任何部署口令制度**，且 `push-deploy.sh` 一次做完 `git add -A` → `commit` → `push origin main` → `firebase deploy`，**與下方的上線流程直接衝突**。導入口令閘前，該腳本不得使用。
+> ## 🟢 刻意例外：本專案不採用部署口令制度（2026-09-02 決定）
+>
+> **本專案是純前端小專案**：只有 Firebase Hosting，沒有 Cloud Run、沒有後端、
+> 沒有資料儲存、沒有使用者帳號。壞掉只影響一個展示頁面。
+>
+> 因此刻意採用最簡快的部署方式——`./push-deploy.sh` 一次完成
+> `git add -A` → `commit` → `push origin main` → `firebase deploy --only hosting`。
+>
+> **上表的五個口令在本專案不適用。** 這是宣告過的例外，不是疏漏。
+> 理由是：小專案套上五段口令只會讓人繞過它，而**被繞過的流程比沒有流程更危險**——
+> 它給人「有在管」的錯覺。
+>
+> ### 這個例外什麼時候就不再成立
+>
+> 出現以下任一情況，就必須回到標準流程（見 `OpDev/standards/DEPLOYMENT.md`）：
+>
+> - 開始有真實使用者（不再只是展示品）
+> - 加入任何後端服務（Cloud Run、Functions）
+> - 加入任何資料儲存（Firestore、Storage）或使用者帳號
+> - 開始處理任何個人資料
+>
+> 屆時 `push-deploy.sh` 必須拆開，讓 commit／push／deploy 分離。
 
 ---
 
