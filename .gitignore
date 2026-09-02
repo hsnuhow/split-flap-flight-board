@@ -3,9 +3,18 @@ node_modules/
 .env
 *.log
 .DS_Store
-.claude/settings.local.json
 public/fonts/static/
 functions/
 push-deploy.sh
 
-.claude/worktrees/
+
+# ── Claude Code ──────────────────────────────────────────────
+# 本地設定（settings.local.json / worktrees 等）不 commit；
+# 但 agent 團隊定義與編排 skill 納入版控（隨 repo 分享）。
+.claude/*
+!.claude/agents/
+!.claude/skills/
+!.claude/settings.json
+!.claude/hooks/
+!.claude/launch.json
+# settings.local.json 與 worktrees/ 仍被上方 .claude/* 排除
