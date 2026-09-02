@@ -178,6 +178,32 @@ gcloud run services list --project=<PROJECT> --format=json | \
 ```
 
 
+---
+
+## 五之四、public/ 是部署根目錄（2026-09-02 處理）
+
+`firebase.json` 的 `hosting.public` 是 `public`，`ignore` 只排除
+`firebase.json`、`**/.*`、`node_modules/**`、`scripts/**`、`functions/**`。
+
+**放進 `public/` 的任何非隱藏檔都會被 `firebase deploy` 推上線**，即使沒有任何程式碼引用它。
+`firebase deploy` 部署的是本機檔案，不是 git 內容，所以「沒有 commit」不代表「不會上線」。
+
+### 已處理
+
+`public/routemap.png`（1.37 MB，中華航空全球航點圖）從未被引用、從未進版控。
+實測線上該路徑回傳的是 index.html（SPA fallback），確認未被部署——純粹是因為
+上次部署早於這個檔案（2026-05-18 建立）。**下一次部署就會把它推上線。**
+
+**已刪除**（2026-09-02）。該檔從未進版控，所以刪除不影響 git 歷史；
+它是中華航空官網的公開素材，需要時可重新取得。
+
+### 日後要注意
+
+- [ ] 新增資產前先確認它是否真的要對外——不要用 `public/` 當暫存區
+- [ ] `public/.DS_Store` 目前存在，但被 `ignore` 的 `**/.*` 排除，不會部署
+- [ ] 本專案使用中華航空的 logo 與品牌素材（`CAL_logo.png` 已上線）。
+      個人專案常見，但若日後要公開推廣，第三方商標的使用範圍值得你自己確認
+
 ## 五、完成後
 
 1. 把仍存在的 🔴 項目排進 `docs/BACKLOG.md`（沒有就建一個）
