@@ -7,7 +7,7 @@ description: 召集 agent 團隊對一個任務階段做循環開發/驗證。�
 
 你（主控）依本流程召集 `.claude/agents/` 的專業 agent。用 **Agent 工具**派工，`subagent_type` 填對應名稱（`product-manager` / `dev-engineer` / `devops-architect` / `security-auditor` / `code-reviewer` / `ui-designer` / `user-tester`）。獨立稽核**同一回合並行派出**。
 
-## 🔴 口令以本專案 CLAUDE.md 為唯一權威
+## HIGH 口令以本專案 CLAUDE.md 為唯一權威
 
 **本 SKILL 不定義、不發明任何口令。** 不同專案的部署口令用字不同
 （有的用 `stage` / `production`，有的用 `正式` / `測試`，有的用 `firebase` / `cloudflare`）。
@@ -37,7 +37,7 @@ description: 召集 agent 團隊對一個任務階段做循環開發/驗證。�
 
 - **無口令 / 只給開發類口令（`核准開發`、`核准修正` 等）**：跑 find→fix→review→**再驗證（編譯/type-check/邏輯）**，**停在部署前**，回報「請下 <本專案的預覽或部署口令>」。
 - **階段內自治口令**（若本專案 CLAUDE.md 有定義，例如 `核准循環開發部署：<階段>`）：在該**指定階段範圍內**自行 開發+執行+部署到**非最終環境**+複驗，循環到驗收達成或連續 2 輪無新問題。
-  - 🔴 **絕不**自動：部署到最終對外環境、`git push`、開 PR、merge。要動這些一律停下請使用者下對應口令。
+  - HIGH **絕不**自動：部署到最終對外環境、`git push`、開 PR、merge。要動這些一律停下請使用者下對應口令。
   - 每次部署**前必讀本專案的部署文件**（若有 `DEPLOYMENT.md` / `DEPLOY_SOP.md` 就讀它；沒有就讀 CLAUDE.md 的部署章節）。
   - 範圍模糊就停下問，不自我擴張階段。
 - **全鏈自治口令**（若本專案 CLAUDE.md 有定義）：語意與煞車條件一律以該專案 CLAUDE.md 為準。
@@ -54,7 +54,7 @@ description: 召集 agent 團隊對一個任務階段做循環開發/驗證。�
    - `ui-designer`：UI 清晰/一致/手機（若涉前端）
    - `user-tester`：對已部署的可測環境亂測挑毛病（單軌專案用 preview，不可對正式環境亂測）
 5. **彙整 → 修補（dev-engineer）**：把確認的發現依優先序修；對抗式複驗（找「看似對其實錯」）。
-6. **收斂判斷**：回到 4 複驗。連續 2 輪無新 🔴/🟡 → 視為收斂。
+6. **收斂判斷**：回到 4 複驗。連續 2 輪無新 /MEDIUM → 視為收斂。
 7. **（自治模式）部署到非最終環境 + 實機複驗** → user-tester 再亂測一輪。
 8. **總結**：本階段做了什麼、驗證結果、剩餘待辦、（自治）宣告授權結束 /（非自治）請使用者下對應部署口令。
 
