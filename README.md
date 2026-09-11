@@ -5,15 +5,15 @@
 
 **路徑 B（單軌）** — 唯一環境 `split-flap-flight-board`
 
-### 🟢 本專案刻意不採用部署口令制度（2026-09-02 決定）
+### 部署口令與程序
 
 純前端小專案：只有 Firebase Hosting，沒有 Cloud Run、沒有後端、沒有資料儲存、沒有帳號。
+但**仍然採用部署口令制度**——口令表在 [`CLAUDE.md`](CLAUDE.md) 第一節，
+口令對應到哪些實際指令在 [`DEPLOYMENT.md`](DEPLOYMENT.md)。
 
-部署方式：`./push-deploy.sh`，一次完成 `git add -A` → `commit` → `push origin main`
-→ `firebase deploy --only hosting`。
-
-這是**宣告過的例外**，不是疏漏。理由與失效條件見 `CLAUDE.md` 最前面。
-稽核（`/devops-audit`）看到這個宣告會判為通過。
+🔴 `./push-deploy.sh`（本機腳本，已 gitignore）**不得作為部署路徑**：
+它把 `git add -A` → `commit` → `push origin main` → `firebase deploy` 綁成一步，
+preview 沒有存在空間。理由見 `DEPLOYMENT.md` 第 5 節。
 
 ## 現場展示設定——全螢幕 Kiosk 模式
 

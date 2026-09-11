@@ -2,19 +2,51 @@
 
 ## 🔴 部署口令與上線流程（全站統一標準，最高優先）
 
-> 2026-09-02 定案，八個專案一致。與本檔其他段落衝突時，**以本節為準**。
+> 與本檔其他段落衝突時，**以本節為準**。
+> `## 刻意例外` 節就其**明列的涵蓋範圍**優先於本節，**但明文不涵蓋本節的口令表**——
+> 表上的口令全部有效，抽取工具（`enter-project.sh`、`team-verify`）抽到的算數。
+
+| | |
+|---|---|
+| 專案分級 | T3 |
+| 部署路徑 | B 單軌 |
+| 雲端專案 ID | `split-flap-flight-board` |
+| 對外網址 | https://split-flap-flight-board.web.app |
+| 部署文件 | [`DEPLOYMENT.md`](DEPLOYMENT.md) |
+| 回滾文件 | [`ROLLBACK.md`](ROLLBACK.md) |
+| 變更紀錄 | [`changelog.md`](changelog.md) |
 
 本專案為**單軌（只有一個對外環境）**。
 
-| 動作 | 口令 |
+### 口令表
+
+**專案內唯一正本。用字逐字取自 `OpDev/standards/DEPLOYMENT.md` 第二節正典表，不得改字。**
+
+| 語意角色 | 口令 |
 |---|---|
-| 部署但不接流量 | `核准部署：preview` |
-| 部署到 staging | — **本專案無此環境，跳過** |
+| 預覽（部署但不接流量） | `核准部署：preview` |
+| 中介（部署到 staging） | — **本專案單軌，無此環境** |
 | 上線 | `核准部署：正式` |
-| 從穩定點還原 | `核准部署：還原` |
+| 還原（從穩定點回復） | `核准部署：還原` |
+| 開 PR | `核准推送：PR` |
+| 合併進 `main` | `核准推送：merge` |
+| 推送非 `main` 分支到遠端 | `核准推送：分支` |
+| 撤銷／急停（收回已給的授權） | `禁止執行開發` |
+
+開發類四個，**不授權任何部署**：`核准開發`／`核准修正`／`核准改善`／`核准執行`
+
+循環自治族（依序做完每一步並驗證，中間不逐步請示，跑到終點口令的狀態為止）：
+
+| 終點 | 口令 |
+|---|---|
+| 預覽 | `核准循環自治：核准部署：preview` |
+| 中介 | — **本專案單軌，無此環境** |
+| 合併進 `main` | `核准循環自治：核准推送：merge` |
+| 上線（全鏈） | `核准循環自治：核准部署：正式` |
 
 `可以`、`好`、`繼續`、`OK`、`試試看` 一律**無效**，不觸發任何 build 或 deploy。
-`核准開發` / `核准修正` / `核准改善` / `核准執行` **不授權任何部署**。
+
+收到部署口令後，**第一步必須讀 [`DEPLOYMENT.md`](DEPLOYMENT.md)**——口令與實際指令的對應在它第 1 節。逐步執行，不得憑記憶。
 
 ### 上線鐵則
 
@@ -28,383 +60,152 @@
 
 三條缺一不可：
 
-1. **上線一律從 `main` 出。** 不得從 `develop`、feature 分支或 worktree 直接上線。
-2. **merge 到 `main` 之前，必須已在 preview 驗證且無誤。** 沒驗證過的東西不准進 main。
-3. **驗證是實際打端點**，不是看部署指令回傳成功。至少確認 `/health` 回 200、關鍵流程實機走一次。
+1. **上線一律從 `main` 出。** 不得從 feature 分支或 worktree 直接上線。
+2. **merge 到 `main` 之前，必須已在 preview 部署並驗證且無誤。**
+3. **驗證是實際打端點**，不是看部署指令回傳成功。本站無 `/health`，以「根路徑回 200 ＋ 瀏覽器實機看板走一輪」代替，且**結果要貼進 PR**。
 
-收到部署口令後，**第一步必須讀本專案的部署文件**，再逐步執行，不得憑記憶。
+### 煞車條件
 
-> ## 🟢 刻意例外：本專案不採用部署口令制度（2026-09-02 決定）
->
-> **本專案是純前端小專案**：只有 Firebase Hosting，沒有 Cloud Run、沒有後端、
-> 沒有資料儲存、沒有使用者帳號。壞掉只影響一個展示頁面。
->
-> 因此刻意採用最簡快的部署方式——`./push-deploy.sh` 一次完成
-> `git add -A` → `commit` → `push origin main` → `firebase deploy --only hosting`。
->
-> **上表的五個口令在本專案不適用。** 這是宣告過的例外，不是疏漏。
-> 理由是：小專案套上五段口令只會讓人繞過它，而**被繞過的流程比沒有流程更危險**——
-> 它給人「有在管」的錯覺。
->
-> ### 這個例外什麼時候就不再成立
->
-> 出現以下任一情況，就必須回到標準流程（見 `OpDev/standards/DEPLOYMENT.md`）：
->
-> - 開始有真實使用者（不再只是展示品）
-> - 加入任何後端服務（Cloud Run、Functions）
-> - 加入任何資料儲存（Firestore、Storage）或使用者帳號
-> - 開始處理任何個人資料
->
-> 屆時 `push-deploy.sh` 必須拆開，讓 commit／push／deploy 分離。
+**適用於所有循環自治口令與簡化授權。任一條成立 → 立刻停下請示，不得為了讓鏈走完而降低標準。**
+
+1. **git 衝突**（rebase／merge 出現 conflict）。
+2. **驗證不綠。** 判準是「**有沒有綠**」，不是「有沒有紅」——指令沒執行、環境沒起來、端點沒回 200，三者看起來都不紅。
+3. **要進 `main` 但缺 preview 部署與端點驗證。**
+4. **超出當下授權範圍**（例如終點是 preview 卻要上線）。
+5. **碰到下一節任何一條紅線或絕對禁令。**
+6. **驗證結果留不下來**（沒有可貼進 PR 的實際輸出）。
+
+`禁止執行開發` 一出現，立即停止當前所有循環與部署動作。
 
 ---
 
-## ⚠️ 重要規則
+## 🔴 永久強制規則（紅線與絕對禁令，不受上下文壓縮影響）
 
-**在取得口令「執行開發」之前，禁止修改任何程式碼。**
-本文件只作規劃用途，所有改善計畫須經使用者確認後才執行。
+> **紅線＝要口令才能做；絕對禁令＝給了口令也不做。**
+
+- **【絕對禁令】所有 `firebase` / `gcloud` 指令一律顯式帶 `--project split-flap-flight-board`。** 不帶會落到 CLI 的預設專案，而那可能是別人的專案。
+- **【絕對禁令】不讀取、不列印、不提交 `.env*`、credential、私鑰、API 金鑰。** 憑證只進 Secret Manager，不進 repo、不進 `.claude/settings*.json`。
+- **【絕對禁令】不得 force push、不得改寫 `main` 的 git 歷史、不得 `git push origin main` 繞過 PR。** 本 repo 無 tag、無 CI、無 build 產物存檔——**git 歷史是唯一的還原能力**。
+- **【紅線】沒有部署口令不得 build 或 deploy。**
+- **【紅線】沒有推送口令不得 `git add` / `commit` / `push` / 開 PR / merge。**
+- **【紅線】不得使用 `push-deploy.sh` 作為部署路徑。** 它把 `git add -A` + `commit` + `push` + `deploy` 綁成一步，preview 沒有存在空間，且不帶 `--project`。理由見 `DEPLOYMENT.md` 第 5 節。
+- **【紅線】上線一律從 `main` 出，且 merge 進 `main` 前必須已在 preview 驗證。**
+
+---
+
+## 核心原則
+
+- **這是一台展場看板，不是一個系統。** 沒有使用者、沒有帳號、沒有後端、沒有狀態機。任何提案若引入其中之一，先問「展場真的需要嗎」。
+- **內容與程式分離。** 會變的是 `public/data/*.json`（班次與廣播文字），不是 `index.html`。改內容不要改程式。
+- **零外部依賴是刻意的。** 無 bundler、無框架、無 CDN、無外部網域請求。新增依賴要有理由。
+- **最小變更、完成即停。** 先計畫後執行。
 
 ---
 
 ## 專案背景
 
 2026 COMPUTEX 展示用途。單一終端靜態展示，無多用戶需求。
-- 技術棧：純 HTML/CSS/JS（無 bundler）+ Firebase Hosting + GitHub Actions
-- 資料來源：**靜態 JSON**（`public/data/flights-zh.json`、`flights-en.json`）由人工維護，不再串接 TDX API
-- 廣播訊息：`public/data/promo.json`，手動編輯
-- 部署：`./push-deploy.sh` 本機腳本（已 gitignore，不上傳 GitHub）
+
+- 技術棧：純 HTML/CSS/JS（無 bundler）+ Firebase Hosting。**無 CI**——repo 內沒有 `.github/`，push 不觸發任何自動部署
+- 架構：一個 `public/index.html`（單檔，含全部 CSS/JS）＋ `public/data/` 三個靜態 JSON ＋ 本機字型 `NotoSansTC-VariableFont_wght.ttf`
+- 資料：`flights-zh.json`、`flights-en.json`、`promo.json`，**人工維護**，不串接任何 API
+- 雲端殘留：Firestore `(default)` 與 collection `airportNames`（2026-03-10 遺留，本站不讀寫）；計費**已關閉**；0 Cloud Function
+- 部署：見 [`DEPLOYMENT.md`](DEPLOYMENT.md)
 
 ---
 
-## 改善計畫
+## 待辦
 
-### 功能面
+> 本節承擔 `docs/BACKLOG.md` 的角色（見 `## 刻意例外` 第 3 節豁免第 1 項）。
 
-#### F1｜API 憑證安全性（目前憑證直接寫在 index.html 前端）
-
-**問題**：`CONFIG.tdx.clientId` / `clientSecret` 明碼暴露於瀏覽器，任何人可從開發者工具讀取。
-
-**方案（最簡單，無複雜基礎設施）：Firebase Cloud Functions 輕量代理**
-
-- 新增 `functions/index.js`，一個 Firebase Cloud Function：
-  - 讀取儲存在 Firebase Functions Secret Manager 的 TDX 憑證（`firebase functions:secrets:set TDX_CLIENT_ID`）
-  - 對外暴露 `GET /api/flights?type=arrival|departure` 端點
-  - 後端呼叫 TDX API 後回傳 normalized JSON
-- `index.html` 前端改呼叫 `/api/flights` 而非直接打 TDX
-- 憑證完全留在 Firebase 後端，前端不再有任何 secret
-
-**成本**：Firebase Functions 免費額度（每月 200 萬次呼叫）足夠單一終端使用。
+| # | 項目 | 級別 | 處置 |
+|---|---|---|---|
+| B1 | `Browser key (auto created by Firebase)` 未設來源（referrer）限制（`browserKeyRestrictions: {}`）。該 key 目前未被本站使用、計費已關閉 | LOW | 一次性：Console → API 與服務 → 憑證 → 設 HTTP referrer 限制為 `split-flap-flight-board.web.app/*` |
+| B2 | Firestore `(default)` 與 collection `airportNames`（5 筆）為 2026-03-10 遺留，本站不使用 | LOW | 衛生項。刪除後 `刻意例外` 失效條件 E4 的基準要同步改為「不得有任何 collection」 |
+| B3 | repo 無任何 git tag，`ROLLBACK.md` 第 1 節的還原點指令會回空 | LOW | 已豁免建 tag，改以 Hosting 版本紀錄為還原點 |
+| B4 | Secret Manager 內的 TDX／Gemini 金鑰自 2026-04-30 起已不被前端使用，**尚未輪換**；曾於 `.claude/settings.local.json` 以明碼出現過 | LOW | 至各平台輪換或刪除。計費已關閉，Secret Manager 目前回 `BILLING_DISABLED` |
+| B5 | 預設 compute 服務帳戶持有 `roles/editor` | LOW | 需雲端變更，要使用者核准 |
+| B6 | `github-action-*` 服務帳戶仍持有 `cloudfunctions.developer` + `firebasehosting.admin`（金鑰已於 2026-09-02 刪除，workflows 已不存在） | LOW | 確認是否還需要此帳戶，不需要就刪 |
+| B7 | gitleaks 在 `public/index.html` 有 1 筆命中，高機率誤報 | LOW | 確認後列入 `.gitleaksignore` |
 
 ---
 
-#### F2｜AIRPORT_NAMES 重複三份問題
+## 刻意例外｜純顯示前端，豁免跨專案治理骨架（2026-09-10 宣告，2026-09-11 修訂）
 
-**問題**：`index.html`、`fetch_flights.js`、`convert_export.js` 各自維護一份相同的機場代碼對照表，新增機場需改三個地方。
+> 依 `OpDev/standards/DEPLOYMENT.md` 第七節四條件撰寫。**全專案只有這一節，沒有第二處例外宣告。**
 
-**方案**：
-- 建立 `public/data/airports.json` 作為單一來源
-- `fetch_flights.js` 和 `convert_export.js` 以 `require`/`readFileSync` 載入
-- `index.html` 改為在啟動時 `fetch('data/airports.json')` 載入
-- 此 JSON 本身就是靜態資產，可隨 Firebase Hosting 部署
+### 0. 單人專案的簡化授權（2026-09-11 啟用）
 
----
+本專案啟用「單人專案的簡化授權」（`OpDev/standards/DEPLOYMENT.md` 第四節）。
+煞車條件見本檔第 1 節「煞車條件」。
+失效條件：出現第二位有 merge 權限的維護者。
 
-#### F3｜每 30 分鐘自動更新資料
+### 1. 理由
 
-**問題**：目前資料只在 GitHub Actions push 時更新，展示期間資料是靜態的。
+**使用者裁示（2026-09-10，逐字）：**
 
-**方案（配合 F1 的 Cloud Function）**：
-- `index.html` 新增 `setInterval`，每 30 分鐘（`30 * 60 * 1000` ms）呼叫一次 `/api/flights`
-- 取得新資料後更新 `flightData`、重新計算頁數、重設 `phaseIdx = 0 / pageIdx = 0`
-- 在頁面右上角 `update-label` 顯示最後資料抓取時間
-- 翻頁輪播（每 10 秒）維持不變，與資料刷新週期完全獨立
+> 「Split-flap 是很單純小的前端頁面，沒有任何後端，純顯示。因此列為所有規則的例外。」
 
-**流程圖**：
-```
-啟動 → 載入資料 → 開始翻頁輪播（每 10s）
-                    ↑
-        每 30 分鐘呼叫 /api/flights 更新 flightData
-```
+**實跑佐證（2026-09-10）：** 純前端單檔 629 行、0 Cloud Function、0 個外部網域、0 個表單／`localStorage`、`billingEnabled=False`、無 `.github/`、Firestore 僅 1 個機器快取 collection。
 
----
+**照標準做的成本是持續性的**（第七節：一次性成本走 BACKLOG，不構成例外理由）：骨架文件要求與程式碼保持一致，等於**每改一行 CSS 或一則廣播文案，都要回頭確認多份文件還對得上**；而分母是一個無輸入、無後端、無帳單的展示頁。**不寫這一節的代價不是「省事」，是稽核分不出「刻意不做」與「忘了做」。**
 
-#### F4｜狀態解析（parseStatus）
+### 2. 失效條件
 
-使用者評估：目前顯示效果可接受，暫不列為優先改善項目。保持現狀。
+**逐條在稽核當下可判真假。任一條為真，本節整節失效**，回復完整標準，並在 `changelog.md` 記一筆。
 
----
+| # | 失效條件（**為真即失效**） | 2026-09-10 實跑輸出 |
+|---|---|---|
+| E1 | repo 內出現伺服器端程式碼目錄（`functions`／`server`／`api`／`backend`） | 無輸出（四者皆不存在） |
+| E2 | 雲端專案有任何 Cloud Function／Cloud Run 服務 | `No functions found in project split-flap-flight-board.` |
+| E3 | 計費被啟用 | `False` |
+| E4 | Firestore 出現 `airportNames` 以外的 collection | `{"collectionIds": ["airportNames"]}` |
+| E5 | 前端開始收使用者輸入或存瀏覽器狀態 | `0` |
+| E6 | 前端出現同源 `data/*.json` 以外的網路請求 | 無輸出 |
+| E7 | 出現第二位有 `main` merge 權限的維護者 | `hsnuhow`（僅一位） |
 
-### 顯示面
-
-#### D1｜標題列與第一資料列之間出現不應有的黃色間隙
-
-**問題**：標題列（header row）翻牌格的 `.bottom` 下緣 border 仍為黃色，與第一資料列之間的 gap 透出黃色光。
-
-**修正**：在 `.row.header-row .flap .bottom` CSS 規則中，將所有 border 顏色覆蓋為 `#111`（目前只改了 `border-bottom-color`，需改為 `border-color: #111`）。同時確認 `.flipper` 在 header row 的 border 也一併處理。
-
----
-
-#### D2｜字寬 90%，字高增加
-
-**問題**：翻牌格的字體顯示比例不夠接近真實翻牌板，字太寬、太矮。
-
-**修正**：
-- 字寬縮減：在 `.flap .top, .flap .bottom, .flap .flipper` 加入 `transform: scaleX(0.9)`
-- 字高增加：調整 `font-size`（目前 `1.55vw`），改為更大的值（約 `1.9vw`）
-- 可能同步調整行高 `line-height`，讓字在格子中垂直居中顯示
-
----
-
-#### D3｜翻牌速度慢 100%（即慢一倍）
-
-**問題**：目前翻牌過快，不夠有機械感。
-
-**修正**：
-- CSS `@keyframes flip-down` 動畫時間：`0.065s` → `0.13s`
-- `triggerFlip` 中 `setInterval tick`：`70ms` → `140ms`
-- 每格隨機延遲：`Math.random() * 380` → `Math.random() * 760`
-
----
-
-#### D4｜中華航空 LOGO 放大
-
-**問題**：目前 Logo 高度 `7.5vh`，在大螢幕展示時偏小。
-
-**修正**：
-- `#cal-logo` 高度：`7.5vh` → `10vh`（或依視覺效果調整）
-- Logo bar 整體高度 `#logo-bar`：`9vh` → `12vh`，確保不裁切
-
----
-
-#### D5｜最上方顯示即時日期時間
-
-**需求**：在看板最頂部顯示目前的日期與時間，方便現場觀眾辨識資訊時效性。
-
-**設計**：
-- 位置：`#logo-bar` 右側（目前 section-indicator 上方）或另起一個 `#datetime-display`
-- 格式：`2026.05.20  WED  14:32:55`（含星期）
-- 字體：`Courier New`，顏色 `#ffcc00`（與主題一致），字級約 `0.9vw`
-- 實作：`setInterval` 每秒更新一次 `textContent`，使用 `Intl.DateTimeFormat` 格式化
-
----
-
----
-
-## 部署一次性設定（F1 Cloud Function）
-
-在第一次部署 Cloud Function 之前，需執行以下命令：
+**複驗腳本**（整段複製貼上即可跑；輸出與上表右欄逐項比對）：
 
 ```bash
-# 1. 設定 TDX 憑證至 Firebase Secret Manager（互動式輸入，不會暴露）
-firebase functions:secrets:set TDX_CLIENT_ID
-firebase functions:secrets:set TDX_CLIENT_SECRET
-
-# 2. 取得 GitHub Actions 用的 Firebase CI token
-firebase login:ci
-# 將輸出的 token 加入 GitHub 專案 Secrets，名稱為 FIREBASE_TOKEN
-
-# 3. 安裝 functions 依賴
-npm install --prefix functions
-
-# 4. 完整部署（含 functions）
-firebase deploy --only hosting,functions
+cd ~/MyDeveloper/split-flap-flight-board
+echo "E1:"; ls -d functions server api backend 2>/dev/null
+echo "E2:"; firebase functions:list --project split-flap-flight-board
+echo "E3:"; gcloud beta billing projects describe split-flap-flight-board \
+             --format='value(billingEnabled)'
+echo "E4:"; curl -sS -X POST \
+  "https://firestore.googleapis.com/v1/projects/split-flap-flight-board/databases/(default)/documents:listCollectionIds" \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json" -d '{"pageSize":20}'
+echo "E5:"; grep -cE '<form|<input|localStorage|sessionStorage|document\.cookie' public/index.html
+echo "E6:"; grep -oE 'https?://[^"'"'"' ]+' public/index.html | sort -u
+echo "E7:"; gh api repos/hsnuhow/split-flap-flight-board/collaborators --jq '.[].login'
 ```
 
----
+> ⚠️ E5／E6 的 ERE 樣式要用**單引號**包住。改成雙引號再逃脫管線符號會讓 `grep -E` 把 `\|` 當字面字元，於是恆回 0，把「已失效」報成「仍成立」。
 
-## 優先順序建議
+> **E3 是最有力的一條**：帳單關閉時，這個專案在雲端上不可能造成金錢損失。一旦有人開啟計費，本節立刻失效。
 
-| 優先 | 項目 | 難度 | 狀態 |
-|------|------|------|------|
-| 高   | D1 黃色間隙 | 低（一行 CSS） | ✅ 已完成（前次） |
-| 高   | D5 即時時間顯示 | 低（幾行 JS） | ✅ 已完成（前次） |
-| 高   | D3 翻牌速度 | 低（改常數） | ✅ 已完成（前次） |
-| 中   | D4 Logo 放大 | 低（改 CSS） | ✅ 已完成（前次） |
-| 中   | D2 字寬字高 | 低（改 CSS） | ✅ 已完成（前次） |
-| 中   | F3 30 分鐘自動更新 | 中（JS 邏輯） | ✅ 已完成（前次） |
-| 低   | F2 機場表單一來源 | 中（重構） | ✅ 已完成（前次） |
-| 低   | F1 憑證安全（Cloud Function） | 中高（新增 Function） | ✅ 已完成（前次） |
-| —   | 廣播訊息列 Promo Bar | 低（JS + CSS） | ✅ 已完成（2026-04-30） |
-| —   | 安全稽核與舊檔清理 | 低（刪除） | ✅ 已完成（2026-04-30） |
+### 3. 涵蓋範圍
 
----
+**🟢 豁免（逐項；沒列到的一律不在例外範圍內，舉證責任在本專案）：**
 
-## 開發日誌
+1. **`docs/BACKLOG.md` 不建**——角色被本檔「待辦」節吸收。
+2. **`architecture.md` 不建**——架構是「一個 `public/index.html` ＋ 三個靜態 JSON ＋ Firebase Hosting」，已寫在「專案背景」節；獨立成檔只會多一份會漂移的副本。
+3. **`docs/data-model.md` 不建**——沒有資料庫；資料就是 `public/data/` 的三個 JSON，schema 由檔案自身表達。
+4. **`product_guideline.md` 不建**——沒有業務規則可寫：無使用者、無角色、無權限、無狀態機。產品行為就是「輪播班次表」。
+5. **`docs/INDEX.md` 不建**——根目錄 markdown 共 6 份，索引的維護成本高於它省下的尋找成本。
+6. **`devops-audit` 不按月跑**——改為「`public/` 或部署設定有實質變更後才跑」。
+7. **`FRAMEWORK.md` 第三節 T3 的兩項計費基準線不建立**（「所屬計費帳戶有預算警示」「貴 SKU 支出天花板」）——`billingEnabled=False`，沒有計費帳戶可以掛。**E3 觸發時本項一併失效。**
+8. **`ROLLBACK.md` 的 git tag 還原點不建立**——Firebase Hosting 的版本紀錄本身就是還原點，tag 對一個無 build 步驟的靜態站不增加還原能力。
 
-### 2026-03-10｜Gemini 機場代號解析 + 部署完成
+**🔴 不豁免（下限）——即使使用者說「所有規則的例外」，以下仍然成立：**
 
-#### 本次開發項目
+> 判準是**失效方向對不對稱**：下列各項省不到持續成本（不需要每月維護），卻拿掉唯一的兜底。
 
-**G1｜Gemini API 機場代號動態解析**
-
-- **問題**：TDX API 回傳的 ICAO 機場代號（如 ONT、PRG、BWN 等）不在 `airports.json` 靜態表中，前端直接顯示原始英文代號。
-- **解法**：Cloud Function 新增三層機場名稱解析架構：
-  1. `airports.json`（靜態，同步，最快）
-  2. Firestore `airportNames` collection（動態快取，Gemini 解析後永久存入）
-  3. Gemini API `gemini-2.5-flash-lite`（未知代號首次遇到時呼叫，結果存入 Firestore）
-- **安全性**：`GEMINI_API_KEY` 存於 Firebase Secret Manager，前端完全無法存取
-- **效能**：同一次 API 請求內，每個未知代號只呼叫一次 Gemini（批次去重）
-
-**G2｜Firestore 錯誤快取修正**
-
-- Gemini 首次解析時將部分 TDX 自訂代號誤認（BWN → 台南、PEN → 屏東、ROR → 台東、TAK → 台東、TFU → 台東）
-- 修正方式：將正確對照直接寫入 `airports.json`（Layer 1 優先），並清除 Firestore 錯誤快取
-- 同時將 Gemini 正確解析的代號（CNX、ONT、PHX、PRG 等）一併收入靜態表
-
-**G3｜`?forcereflash` 強制更新功能**
-
-- 新增 URL 參數 `?forcereflash`：繞過所有快取，立即重新呼叫 TDX API
-- 靜默更新（無 overlay），`update-label` 顯示進度
-- 呼叫完成後自動以 `history.replaceState` 清除網址參數
-
-#### 修改的檔案
-
-| 檔案 | 變更內容 |
-|------|---------|
-| `functions/index.js` | 新增 Gemini + Firestore 三層解析；GEMINI_API_KEY secret |
-| `functions/package.json` | 新增 `firebase-admin: ^13.0.0` |
-| `firebase.json` | 新增 `firestore.rules` 設定 |
-| `firestore.rules` | 新增（拒絕所有客戶端存取） |
-| `public/data/airports.json` | 新增 9 個機場（含修正 CTU 為成都雙流、新增 TFU 成都天府）|
-| `public/index.html` | 新增 `?forcereflash` URL 參數處理邏輯 |
-| `scripts/fix_airport_cache.js` | 新增一次性 Firestore 快取修正腳本 |
-
-#### Firebase 環境狀態
-
-- Firebase 方案：已升級至 **Blaze（pay-as-you-go）**
-- Secret Manager 已設定：`TDX_CLIENT_ID`、`TDX_CLIENT_SECRET`、`GEMINI_API_KEY`
-- Firestore 已建立（asia-east1），rules 已部署（拒絕客戶端存取）
-- Cloud Function `api`（asia-east1）：已部署，正常運作
-- Artifact Registry 清理政策：已設定（images > 1 天自動刪除）
-
----
-
-### 2026-03-26｜字型、標題列、顯示優化
-
-#### 本次開發項目
-
-**H1｜NotoSansTC 思源黑體本機字型載入**
-
-- **問題**：中文字元使用系統字型（PingFang SC）回退，在不同裝置顯示不一致。
-- **解法**：新增 `@font-face` 從 `public/fonts/NotoSansTC-VariableFont_wght.ttf` 載入，部署時字型隨 Firebase Hosting 一併發佈，無任何外部 CDN 依賴。
-
-**H2｜白色條紋修正**
-
-- **問題**：翻牌動畫時，row 之間出現白色細條紋（GPU compositing artifact）。
-- **根因**：`.flap` 設定 `perspective: 500px` 作為父層 3D context，與子層 `clip-path` 產生 sub-pixel rendering 衝突。
-- **修正**：移除 `.flap { perspective: 500px }`，改在 `@keyframes` 的 `transform` 函式中加入 `perspective(500px)`，讓 perspective 與 rotateX 套用於同一元素。
-
-**H3｜標題列重構為整塊設計**
-
-- **問題**：標題列使用與資料列相同的翻牌格結構（N 個小格），造成欄名被截斷且需複雜的 bit 數計算。
-- **修正**：
-  - 每欄改為單一 `.header-cell` div，`display: flex; justify-content: center`
-  - `initBoard()` 新增 row 0 獨立建構邏輯，`flapElements[0] = []` 佔位
-  - `displayCurrentPage()` 改為直接 `headerCells[i].textContent = text`
-  - 移除 `formatHeaderRow()` 函式（不再需要 bit 數計算）
-  - 欄名可直接在 `HEADERS` 物件修改（`public/index.html` 第 405–410 行），不需計算字數
-
-**H4｜中文字型寬度設計重構（中文優先）**
-
-- **問題**：翻牌格寬度以英文 Courier New（~0.6em）為標準，中文全形字（1.0em）超出格寬被截斷；強制 `scaleX(0.6)` 壓縮中文顯示失真。
-- **設計理念**：改以中文字寬為格子標準寬度（scaleX 1.0），英文配合壓縮。
-- **修正**：
-  - `font-size: 1.9vw → 1.5vw`：格子寬度約 1.58vw，1.5vw 字型讓中文字（1em）恰好容入格內
-  - CJK `.flap.cjk`：`scaleX(0.6) → scaleX(1.0)`，不壓縮中文
-  - Latin `.flap`：維持 `scaleX(0.9)`，英文字自然置中於較寬格內
-  - CJK keyframes 同步更新
-
-#### 修改的檔案
-
-| 檔案 | 變更內容 |
-|------|---------|
-| `public/index.html` | `@font-face` NotoSansTC；移除 `.flap` perspective；標題列整塊重構；font-size 1.9→1.5vw；CJK scaleX 1.0 |
-| `firebase.json` | 新增 `emulators.hosting.port: 5003`（避免 macOS port 衝突）|
-| `.claude/launch.json` | port 更新為 5003 |
-
----
-
-### 2026-04-30｜廣播訊息列 + 安全稽核 + 舊檔清理
-
-#### 本次開發項目
-
-**I1｜廣播訊息列（Promo Bar）**
-
-- **需求**：在 logo-bar 與 flight-board 之間加入一條滾動廣播訊息列，顯示促銷與活動資訊。
-- **設計**：
-  - 新增 `public/data/promo.json`：16 則中文廣播訊息，JSON 陣列格式，方便日後手動編輯。
-  - HTML：`#promo-bar` > `#promo-text`，插入 logo-bar 與 flight-board 之間。
-  - CSS：高度 3.5vh，黃色文字（`#ffcc00`），NotoSansTC 字型，`transition: opacity 0.4s ease` 淡入淡出。
-  - JS：`loadPromo()` 啟動時 fetch `data/promo.json`；`updatePromo()` 每次呼叫先 opacity→0，400ms 後換文字再 opacity→1；與翻頁 `advance()` 同步，每 10 秒切換一則。
-
-**I2｜顯示細節調整**
-
-- 英文副標題顏色：`#666` → `#ffffff`（白色），提升對比與可讀性。
-- 移除右上角語言指示器 `#section-label`（中文 / ENG）：CSS 規則與 HTML 元素一併刪除，JS 中的相關更新邏輯也一併移除。
-
-**I3｜安全稽核——明文憑證清除**
-
-- **發現**：`.claude/settings.local.json` 的 `permissions.allow` 欄位中，因過去以 `printf | firebase functions:secrets:set` 管道設定 Secret 的操作記錄，留下三組明文 API 憑證：
-  - Gemini API Key
-  - TDX Client ID
-  - TDX Client Secret
-- **處置**：從 `permissions.allow` 陣列中刪除上述三個 `Bash(printf '...')` 條目。
-- **防護**：將 `.claude/settings.local.json` 明確加入專案 `.gitignore`（全域 gitignore 已保護，此為雙重保障）。
-- **建議**：三組金鑰建議至各平台輪換（Rotate），即使本次未外洩至 GitHub。
-
-**I4｜架構清理——移除舊時代檔案**
-
-架構於前次重構為純靜態 JSON 後，以下舊架構殘留檔案確認無用，一併從 git 移除：
-
-| 刪除的檔案 | 原用途 |
-|-----------|--------|
-| `public/data/arrival.json` | 舊 TDX API 抓取快照（2026-03-06） |
-| `public/data/departure.json` | 同上 |
-| `public/data/airports.json` | Cloud Function 機場代號查對表（前端不讀） |
-| `functions/index.js` | TDX + Gemini Cloud Function |
-| `functions/package.json` | 同上 |
-| `functions/package-lock.json` | 同上 |
-| `scripts/fetch_flights.js` | TDX API 資料抓取腳本 |
-| `scripts/convert_export.js` | 舊 JSON 格式轉換工具 |
-| `scripts/fix_airport_cache.js` | 一次性 Firestore 快取修正腳本 |
-| `firestore.rules` | Firestore 安全規則（不再使用 Firestore） |
-
-磁碟另行刪除（未追蹤）：`public/old_CAL_logo.png`、`public/fonts/static/`（9 個靜態字重 TTF）。
-
-**I5｜CI/CD 與設定檔更新**
-
-- `deploy.yml`：移除 `node scripts/fetch_flights.js` 步驟（資料改為手動維護）。
-- `firebase-hosting-pull-request.yml`：同上。
-- `package.json`（root）：移除 `fetch` 與 `deploy`（含 fetch）scripts，僅保留 `deploy: firebase deploy --only hosting`。
-- `.gitignore`：新增 `functions/`、`.claude/settings.local.json`、`push-deploy.sh`。
-
-**I6｜本機部署腳本**
-
-- 新增 `push-deploy.sh`（已加入 `.gitignore`，不上傳 GitHub）：
-  ```
-  ./push-deploy.sh                  # 自動 commit 訊息
-  ./push-deploy.sh "自訂 commit 訊息"
-  ```
-  自動執行 `git add -A` → `git commit` → `git push origin main` → `firebase deploy --only hosting`。
-
-#### 修改的檔案
-
-| 檔案 | 變更內容 |
-|------|---------|
-| `public/index.html` | 新增 `#promo-bar`/`#promo-text` CSS + HTML；新增 `loadPromo()`、`updatePromo()` JS；移除 `#section-label`；英文副標題改白色 |
-| `public/data/promo.json` | 新增（16 則廣播訊息 JSON 陣列） |
-| `.claude/settings.local.json` | 移除 3 筆明文憑證條目（本機檔案，不在 git） |
-| `.gitignore` | 新增 `functions/`、`.claude/settings.local.json`、`push-deploy.sh` |
-| `.github/workflows/deploy.yml` | 移除 fetch_flights 步驟，簡化為純 hosting 部署 |
-| `.github/workflows/firebase-hosting-pull-request.yml` | 同上 |
-| `package.json` | 移除 `fetch`/`deploy` scripts |
-| `push-deploy.sh` | 新增（本機腳本，已 gitignore） |
-
-#### 專案現況（截至 2026-04-30）
-
-- **前端**：`public/index.html`，單一檔案，無任何外部依賴
-- **資料**：手動維護 `flights-zh.json`、`flights-en.json`、`promo.json`
-- **字型**：`NotoSansTC-VariableFont_wght.ttf`（本機部署，無 CDN）
-- **部署**：`./push-deploy.sh` → GitHub → Firebase Hosting 自動觸發
-- **敏感資料**：無任何憑證存於 git；Firebase Secret Manager 中的 TDX/Gemini 金鑰已不被前端使用（建議輪換）
-
+1. **本檔「🔴 永久強制規則」節整節**，含全部絕對禁令。
+2. **本檔第 1 節的口令表整表與煞車條件。** 口令沒有持續性成本，依第七節本來就不夠格當例外標的；且它是使用者自己的授權開關。
+3. **上線一律從 `main` 出、必經 PR、進 `main` 前 preview 端點驗證、部署後實際打端點。** 簡化授權免除的是「誰來審」，不是「留不留軌跡」。
+4. **不把機密寫進 repo。** 純靜態頁一樣會誤放 API key（2026-04-30 實例）。這條的風險與專案大小無關。
+5. **`FRAMEWORK.md` 第三節「不分級別一律必須」的安全項。** 2026-09-10 實測：Firestore rules 無公開寫入 ✅（線上 ruleset `allow read, write: if false`）、零可下載私鑰 ✅、專屬最小權限執行帳戶（無執行中運算資源，不適用）、**API key 雙維度限制 ⚠️ 未過**（來源限制未設）。未過項是一次性成本，依第七節走 BACKLOG → 本檔待辦 B1；**不得因此宣告為已通過**。
+6. **`settings-baseline.json` 不得往寬鬆改。**
+7. **`OpDev/standards/DEPLOYMENT.md` 第四節與第七節自己**——不可被自己豁免。
