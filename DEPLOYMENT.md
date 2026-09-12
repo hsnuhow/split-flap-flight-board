@@ -10,7 +10,7 @@
 | 雲端專案 ID | `split-flap-flight-board` |
 | 對外網址 | https://split-flap-flight-board.web.app |
 | 服務 | Firebase Hosting（純靜態）。**無** Cloud Run、**無** Functions |
-| Firestore | `(default)` 存在，唯一 collection `airportNames`／5 筆機器快取，線上 rules 為 `allow read, write: if false`。本站不讀寫它（`CLAUDE.md` 待辦 B2）|
+| Firestore | `(default)` 存在，唯一 collection `airportNames`／5 筆機器快取，線上 rules 為 `allow read, write: if false`。本站不讀寫它（見 [`docs/BACKLOG.md`](docs/BACKLOG.md)）|
 | 計費 | **已關閉**（`billingEnabled=False`）。Secret Manager 因此回 `BILLING_DISABLED` |
 | CI | **無。** repo 內沒有 `.github/` 目錄，push 不會觸發任何自動部署 |
 
@@ -121,7 +121,7 @@ repo 根目錄有一支 `push-deploy.sh`（**已 gitignore，不在版控內**�
 
 見 [`ROLLBACK.md`](ROLLBACK.md)（口令：`核准部署：還原`）。
 
-本 repo **沒有任何 git tag**，且**刻意不建**（`CLAUDE.md` `刻意例外 2026-09-10-A` 涵蓋範圍豁免第 8 項）
+本 repo **沒有任何 git tag**，且**刻意不建**（`CLAUDE.md` `刻意例外 2026-09-10-A` 涵蓋範圍豁免第 7 項）
 ——Firebase Hosting 的版本紀錄本身就是還原點。
 
 ---

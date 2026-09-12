@@ -83,7 +83,9 @@
 
 > 本節涵蓋兩類：**紅線＝要口令才能做；絕對禁令＝給了口令也不做。**
 
-- **【絕對禁令】所有 `firebase` / `gcloud` 指令一律顯式帶 `--project split-flap-flight-board`。** 不帶會落到 CLI 的預設專案，而那可能是別人的專案。
+- **【絕對禁令】所有 `firebase` / `gcloud` 指令一律顯式帶 `--project split-flap-flight-board`，不得依賴會話狀態——`gcloud config set project`、`firebase use`、`.firebaserc` 的 `default`、`CLOUDSDK_CORE_PROJECT` 一律不算數，目標要在指令本身看得見。**
+  - **`gcloud` 這端現在就是錯的。** 2026-09-12 實跑 `gcloud config get-value project` 回 `ichipickle-dev`（另一個專案，且 `gcloud config configurations list` 顯示同一個帳號 `how.penguin@gmail.com` 對它有權限）。所以**沒帶的指令在錯的目標上一樣會成功執行，不會報錯**——權限不會擋，它只是安靜地做在別人的專案上。
+  - **`firebase` 這端是設定檔在兜底，不是指令寫對了。** 本 repo 的 `.firebaserc` `default` 正好是 `split-flap-flight-board`，所以在這個目錄下漏帶當下無害；但 `firebase use` 切過別名、或在別的目錄下跑，就同樣落到別處。**不要把「目前無害」讀成「可以不帶」。**
 - **【絕對禁令】不讀取、不列印、不提交 `.env*`、credential、私鑰、API 金鑰。** 憑證只進 Secret Manager，不進 repo、不進 `.claude/settings*.json`。
 - **【絕對禁令】不得 force push、不得改寫 `main` 的 git 歷史、不得 `git push origin main` 繞過 PR。** 本 repo 無 tag、無 CI、無 build 產物存檔——**git 歷史是唯一的還原能力**。
 - **【紅線】沒有部署口令不得 build 或 deploy。**
@@ -111,22 +113,6 @@
 - 資料：`flights-zh.json`、`flights-en.json`、`promo.json`，**人工維護**，不串接任何 API
 - 雲端殘留：Firestore `(default)` 與 collection `airportNames`（2026-03-10 遺留，本站不讀寫）；計費**已關閉**；0 Cloud Function
 - 部署：見 [`DEPLOYMENT.md`](DEPLOYMENT.md)
-
----
-
-## 待辦
-
-> 本節承擔 `docs/BACKLOG.md` 的角色（見 `刻意例外 2026-09-10-A` 涵蓋範圍豁免第 1 項）。
-
-| # | 項目 | 級別 | 處置 |
-|---|---|---|---|
-| B1 | `Browser key (auto created by Firebase)` 未設來源（referrer）限制（`browserKeyRestrictions: {}`）。該 key 目前未被本站使用、計費已關閉 | LOW | 一次性：Console → API 與服務 → 憑證 → 設 HTTP referrer 限制為 `split-flap-flight-board.web.app/*` |
-| B2 | Firestore `(default)` 與 collection `airportNames`（5 筆）為 2026-03-10 遺留，本站不使用 | LOW | 衛生項。刪除後 `刻意例外` 失效條件 E4 的基準要同步改為「不得有任何 collection」 |
-| B3 | repo 無任何 git tag，`ROLLBACK.md` 第 1 節的還原點指令會回空 | LOW | 已豁免建 tag，改以 Hosting 版本紀錄為還原點 |
-| B4 | Secret Manager 內的 TDX／Gemini 金鑰自 2026-04-30 起已不被前端使用，**尚未輪換**；曾於 `.claude/settings.local.json` 以明碼出現過 | LOW | 至各平台輪換或刪除。計費已關閉，Secret Manager 目前回 `BILLING_DISABLED` |
-| B5 | 預設 compute 服務帳戶持有 `roles/editor` | LOW | 需雲端變更，要使用者核准 |
-| B6 | `github-action-*` 服務帳戶仍持有 `cloudfunctions.developer` + `firebasehosting.admin`（金鑰已於 2026-09-02 刪除，workflows 已不存在） | LOW | 確認是否還需要此帳戶，不需要就刪 |
-| B7 | gitleaks 在 `public/index.html` 有 1 筆命中，高機率誤報 | LOW | 確認後列入 `.gitleaksignore` |
 
 ---
 
@@ -187,14 +173,13 @@ echo "E7:"; gh api repos/hsnuhow/split-flap-flight-board/collaborators --jq '.[]
 
 **🟢 豁免（逐項；沒列到的一律不在例外範圍內，舉證責任在本專案）：**
 
-1. **`docs/BACKLOG.md` 不建**——角色被本檔「待辦」節吸收。
-2. **`architecture.md` 不建**——架構是「一個 `public/index.html` ＋ 三個靜態 JSON ＋ Firebase Hosting」，已寫在「專案背景」節；獨立成檔只會多一份會漂移的副本。
-3. **`docs/data-model.md` 不建**——沒有資料庫；資料就是 `public/data/` 的三個 JSON，schema 由檔案自身表達。
-4. **`product_guideline.md` 不建**——沒有業務規則可寫：無使用者、無角色、無權限、無狀態機。產品行為就是「輪播班次表」。
-5. **`docs/INDEX.md` 不建**——根目錄 markdown 共 6 份，索引的維護成本高於它省下的尋找成本。
-6. **`devops-audit` 不按月跑**——改為「`public/` 或部署設定有實質變更後才跑」。
-7. **`FRAMEWORK.md` 第三節 T3 的兩項計費基準線不建立**（「所屬計費帳戶有預算警示」「貴 SKU 支出天花板」）——`billingEnabled=False`，沒有計費帳戶可以掛。**E3 觸發時本項一併失效。**
-8. **`ROLLBACK.md` 的 git tag 還原點不建立**——Firebase Hosting 的版本紀錄本身就是還原點，tag 對一個無 build 步驟的靜態站不增加還原能力。
+1. **`architecture.md` 不建**——架構是「一個 `public/index.html` ＋ 三個靜態 JSON ＋ Firebase Hosting」，已寫在「專案背景」節；獨立成檔只會多一份會漂移的副本。
+2. **`docs/data-model.md` 不建**——沒有資料庫；資料就是 `public/data/` 的三個 JSON，schema 由檔案自身表達。
+3. **`product_guideline.md` 不建**——沒有業務規則可寫：無使用者、無角色、無權限、無狀態機。產品行為就是「輪播班次表」。
+4. **`docs/INDEX.md` 不建**——全 repo markdown 共 7 份（根目錄 6 份 ＋ `docs/BACKLOG.md`），索引的維護成本高於它省下的尋找成本。
+5. **`devops-audit` 不按月跑**——改為「`public/` 或部署設定有實質變更後才跑」。
+6. **`FRAMEWORK.md` 第三節 T3 的兩項計費基準線不建立**（「所屬計費帳戶有預算警示」「貴 SKU 支出天花板」）——`billingEnabled=False`，沒有計費帳戶可以掛。**E3 觸發時本項一併失效。**
+7. **`ROLLBACK.md` 的 git tag 還原點不建立**——Firebase Hosting 的版本紀錄本身就是還原點，tag 對一個無 build 步驟的靜態站不增加還原能力。
 
 **🔴 不豁免（下限）——即使使用者說「所有規則的例外」，以下仍然成立：**
 
@@ -204,7 +189,7 @@ echo "E7:"; gh api repos/hsnuhow/split-flap-flight-board/collaborators --jq '.[]
 2. **本檔第 1 節的口令表整表與煞車條件。** 口令沒有持續性成本，依第七節本來就不夠格當例外標的；且它是使用者自己的授權開關。
 3. **上線一律從 `main` 出、必經 PR、進 `main` 前 preview 端點驗證、部署後實際打端點。** 簡化授權免除的是「誰來審」，不是「留不留軌跡」。
 4. **不把機密寫進 repo。** 純靜態頁一樣會誤放 API key（2026-04-30 實例）。這條的風險與專案大小無關。
-5. **`FRAMEWORK.md` 第三節「不分級別一律必須」的安全項。** 2026-09-10 實測：Firestore rules 無公開寫入 ✅（線上 ruleset `allow read, write: if false`）、零可下載私鑰 ✅、專屬最小權限執行帳戶（無執行中運算資源，不適用）、**API key 雙維度限制 ⚠️ 未過**（來源限制未設）。未過項是一次性成本，依第七節走 BACKLOG → 本檔待辦 B1；**不得因此宣告為已通過**。
+5. **`FRAMEWORK.md` 第三節「不分級別一律必須」的安全項。** 2026-09-10 實測：Firestore rules 無公開寫入 ✅（線上 ruleset `allow read, write: if false`）、零可下載私鑰 ✅、專屬最小權限執行帳戶（無執行中運算資源，不適用）、**API key 雙維度限制 ⚠️ 未過**（來源限制未設）。未過項是一次性成本，依第七節走 [`docs/BACKLOG.md`](docs/BACKLOG.md) 的「`Browser key (auto created by Firebase)` 未設來源（referrer）限制」條目，並依 `AUDIT.md` 第七節以第五種處置（**已指派，等待外部人工行動**）追蹤——該條備有指派對象、為什麼 AI 不能代做、一條可執行的驗收指令；**不得因此宣告為已通過**。
 6. **`settings-baseline.json` 不得往寬鬆改。**
 7. **`OpDev/standards/DEPLOYMENT.md` 第四節與第七節自己**——不可被自己豁免。
 
