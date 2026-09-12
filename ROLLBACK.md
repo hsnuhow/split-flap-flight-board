@@ -11,7 +11,7 @@
 
 ```bash
 git tag -l --sort=-creatordate | head -5   # 本 repo 沒有任何 tag，且**刻意不建**：
-                                           # 見 CLAUDE.md `## 刻意例外` 第 3 節豁免第 8 項。
+                                           # 見 CLAUDE.md `刻意例外 2026-09-10-A` 涵蓋範圍豁免第 8 項。
                                            # 還原點改看 Firebase Hosting 版本紀錄（第 3 節）。
 git log --oneline -10
 ```
