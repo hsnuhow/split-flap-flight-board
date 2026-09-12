@@ -121,7 +121,7 @@ repo 根目錄有一支 `push-deploy.sh`（**已 gitignore，不在版控內**�
 
 見 [`ROLLBACK.md`](ROLLBACK.md)（口令：`核准部署：還原`）。
 
-本 repo **沒有任何 git tag**，且**刻意不建**（`CLAUDE.md` `## 刻意例外` 第 3 節豁免第 8 項）
+本 repo **沒有任何 git tag**，且**刻意不建**（`CLAUDE.md` `刻意例外 2026-09-10-A` 涵蓋範圍豁免第 8 項）
 ——Firebase Hosting 的版本紀錄本身就是還原點。
 
 ---
@@ -130,6 +130,6 @@ repo 根目錄有一支 `push-deploy.sh`（**已 gitignore，不在版控內**�
 
 跨專案標準見 `OpDev/standards/DEPLOYMENT.md`<!-- docs-sync: ignore-refs --><!-- 理由：指向另一個 repo (OpDev) -->。
 
-本專案在 `CLAUDE.md` 有一節 `## 刻意例外`（純顯示前端，豁免跨專案治理骨架）。
+本專案在 `CLAUDE.md` 有 `刻意例外 2026-09-10-A`（純顯示前端，豁免跨專案治理骨架）。
 它**就其明列的涵蓋範圍**優先於標準，但**明文不涵蓋口令表**——口令全部有效。
 稽核請以該節的失效條件 E1–E7 逐條複查。
