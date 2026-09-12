@@ -11,7 +11,7 @@
 
 ```bash
 git tag -l --sort=-creatordate | head -5   # 本 repo 沒有任何 tag，且**刻意不建**：
-                                           # 見 CLAUDE.md `刻意例外 2026-09-10-A` 涵蓋範圍豁免第 8 項。
+                                           # 見 CLAUDE.md `刻意例外 2026-09-10-A` 涵蓋範圍豁免第 7 項。
                                            # 還原點改看 Firebase Hosting 版本紀錄（第 3 節）。
 git log --oneline -10
 ```
@@ -46,7 +46,7 @@ match /{document=**} { allow read, write: if false; }
 ```
 
 全拒客戶端存取，無公開寫入。**不要為了「清乾淨」去刪掉它**——刪掉 rules 等於放寬。
-資料庫本身的清理見 `CLAUDE.md` 待辦 B2。
+資料庫本身的清理見 [`docs/BACKLOG.md`](docs/BACKLOG.md)。
 
 ---
 
@@ -69,6 +69,6 @@ match /{document=**} { allow read, write: if false; }
 
 1. 確認服務恢復。本站**沒有 `/health`**（純靜態），以「根路徑回 200 ＋ 瀏覽器實機看板走一輪」代替
 2. 記錄事故：什麼壞了、回到哪個版本、還沒解決什麼——**寫進 [`changelog.md`](changelog.md)**；
-   還沒解決的列進 `CLAUDE.md` 的「待辦」節
+   還沒解決的列進 [`docs/BACKLOG.md`](docs/BACKLOG.md)（標記 `[未處理]`）
 3. 修正問題後重新走完整部署流程，**不要為了趕時間跳過預覽驗證**
    （單軌專案沒有第二個環境可以緩衝，預覽是唯一的驗證機會）
