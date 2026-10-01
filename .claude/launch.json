@@ -6,6 +6,12 @@
       "runtimeExecutable": "firebase",
       "runtimeArgs": ["emulators:start", "--only", "hosting"],
       "port": 5003
+    },
+    {
+      "name": "Static Preview",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8099", "--directory", "public"],
+      "port": 8099
     }
   ]
 }
