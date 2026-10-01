@@ -491,6 +491,15 @@ function initBoard() {
 // ================================================================
 // 顯示輸出
 // ================================================================
+// 置中填入固定寬度；不截斷（字串長度 > width 時原樣返回，由 updateRow 依欄格數處理）
+function centerPad(str, width) {
+    const s = String(str);
+    if (s.length >= width) return s;
+    const total = width - s.length;
+    const left = Math.floor(total / 2);
+    return ' '.repeat(left) + s + ' '.repeat(total - left);
+}
+
 function getRowData(flight) {
     // 航班：首尾留空 " CI81   "（8 格）
     const fnDisplay = (' ' + flight.flight).padEnd(7, ' ') + ' ';
@@ -498,8 +507,8 @@ function getRowData(flight) {
     // 航廈：首尾留空 " T1 "（4 格）
     const termDisplay = ' ' + String(flight.terminal).slice(0, 2) + ' ';
 
-    // 登機門：首尾留空 " A7 "（4 格）
-    const gateDisplay = ' ' + String(flight.gate).slice(0, 2) + ' ';
+    // 登機門：置中填入 4 格，不截斷（長值如 "D15R" 剛好填滿）
+    const gateDisplay = centerPad(flight.gate, 4);
 
     // 報到：首尾留空 " 11 "（4 格）
     const ctr = String(flight.counter);
